@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OnNow — Activity Intelligence Demo (Fictional Data)</title>
+  <meta name="description" content="OnNow demonstration dashboard. All data shown is fictional.">
+
+  <!-- Leaflet: free, open-source map library (loaded from a public CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Always-visible notice that this is a demonstration with fictional data -->
+  <div class="sample-banner" role="note">
+    <span class="sample-banner-tag">Demonstration</span>
+    <span><strong>All data is fictional.</strong> Organisations, activities, locations, contact details, sources and verification statuses are made up for demonstration. No real provider has confirmed anything shown here.</span>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>OnNow</h1>
+        <p class="brand-sub">Live community activity intelligence · Western Sydney pilot: Blacktown &amp; Parramatta</p>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <span class="meta-label">Demo reference date</span>
+      <strong id="demo-date">—</strong>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="Summary of activities matching the current filters">
+    <div class="stat">
+      <span class="stat-value" id="stat-total">0</span>
+      <span class="stat-label">Activities shown</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-orgs">0</span>
+      <span class="stat-label">Organisations delivering</span>
+    </div>
+    <div class="stat stat--provider_confirmed">
+      <span class="stat-value" id="stat-provider_confirmed">0</span>
+      <span class="stat-label">Provider confirmed <em>(sample)</em></span>
+    </div>
+    <div class="stat stat--published">
+      <span class="stat-value" id="stat-published">0</span>
+      <span class="stat-label">Published only <em>(not confirmed)</em></span>
+    </div>
+    <div class="stat stat--unverified">
+      <span class="stat-value" id="stat-unverified">0</span>
+      <span class="stat-label">Unverified</span>
+    </div>
+  </section>
+
+  <main class="layout">
+    <button type="button" class="filters-toggle" id="filters-toggle" aria-expanded="false" aria-controls="filters">
+      <span>Filters</span><span class="filters-toggle-count" id="filters-toggle-count"></span>
+    </button>
+
+    <!-- ===== Filters ===== -->
+    <aside class="filters panel" id="filters" aria-label="Filters">
+      <div class="panel-head">
+        <h2>Filters</h2>
+        <button type="button" class="link-btn" id="reset-filters">Reset all</button>
+      </div>
+
+      <div class="field">
+        <label for="search">Search</label>
+        <input type="search" id="search" placeholder="Activity, organisation, suburb or ID" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="date-preset">Date</label>
+        <select id="date-preset">
+          <option value="all">All dates in sample (14 days)</option>
+          <option value="today">Today (demo date)</option>
+          <option value="tomorrow">Tomorrow</option>
+          <option value="next7">Next 7 days</option>
+          <option value="specific">Choose a date…</option>
+        </select>
+      </div>
+      <div class="field" id="specific-date-field" hidden>
+        <label for="specific-date">Specific date</label>
+        <input type="date" id="specific-date">
+      </div>
+
+      <fieldset class="field">
+        <legend>Time of day</legend>
+        <label class="check">
+          <input type="checkbox" id="evening-only">
+          <span><span class="evening-tag">Evening</span> activities only</span>
+          <span class="count" id="evening-count"></span>
+        </label>
+        <p class="hint" id="evening-definition"><strong>Evening</strong> means an activity operates at any time between 6 pm and midnight, based on its start and finish times. It is a time filter, not a service category.</p>
+      </fieldset>
+
+      <div class="field">
+        <label for="suburb">Suburb</label>
+        <select id="suburb"></select>
+      </div>
+
+      <fieldset class="field">
+        <legend>Service category</legend>
+        <div class="check-actions">
+          <button type="button" class="link-btn" id="categories-all">Select all</button>
+          <button type="button" class="link-btn" id="categories-none">Clear all</button>
+        </div>
+        <div class="checks" id="category-options"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>Verification status</legend>
+        <div class="checks" id="status-options"></div>
+        <p class="hint">Statuses in this demo are fictional examples, not real confirmations.</p>
+      </fieldset>
+    </aside>
+
+    <!-- ===== Map + register ===== -->
+    <section class="content">
+      <div class="panel map-panel">
+        <div class="panel-head">
+          <h2>Activity map</h2>
+          <button type="button" class="btn-secondary" id="fit-map">Fit map to results</button>
+        </div>
+        <div id="map" role="region" aria-label="Map of activity locations. Select a pin to see details."></div>
+        <div class="legend" id="legend" aria-label="Map legend"></div>
+      </div>
+
+      <div class="panel register">
+        <div class="panel-head">
+          <h2>Activity register</h2>
+          <p class="result-count" id="result-count" aria-live="polite"></p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Fictional community activities matching the current filters. Select a row to see details.</caption>
+            <thead>
+              <tr>
+                <th scope="col" data-sort="when"><button type="button">When</button></th>
+                <th scope="col" data-sort="activity"><button type="button">Activity &amp; category</button></th>
+                <th scope="col" data-sort="organisation"><button type="button">Organisation</button></th>
+                <th scope="col" data-sort="suburb"><button type="button">Suburb</button></th>
+                <th scope="col" data-sort="status"><button type="button">Verification</button></th>
+              </tr>
+            </thead>
+            <tbody id="register-body"></tbody>
+          </table>
+          <div class="empty" id="register-empty" hidden>
+            <p><strong>No activities match these filters.</strong></p>
+            <p>Try widening the date range or clicking <em>Reset all</em>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Details panel ===== -->
+    <aside class="details panel" id="details" aria-label="Activity details" tabindex="-1"></aside>
+  </main>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <footer class="footer">
+    <p>OnNow demonstration build · Fictional sample data only · Not for operational use.
+      Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
