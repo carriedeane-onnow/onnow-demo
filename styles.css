@@ -235,6 +235,30 @@ td.c-when .evening-tag { margin-top: 3px; }
 
 .filters-toggle { display: none; }
 
+/* ---------- Map / Register view toggle ---------- */
+.view-toggle {
+  display: flex;
+  align-self: flex-start;
+  padding: 3px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.view-toggle-btn {
+  min-height: 38px;
+  padding: 6px 18px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  font-size: 14px; font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.view-toggle-btn:hover { background: var(--line-2); }
+.view-toggle-btn[aria-pressed="true"] { background: var(--brand); color: #fff; }
+.content > .panel[hidden] { display: none; }
+
 /* ---------- Map ---------- */
 #map {
   height: 460px;
@@ -536,6 +560,10 @@ td.c-status { white-space: nowrap; }
   .filters.is-open { display: block; }
 
   #map { height: 52vh; min-height: 300px; }
+
+  /* View toggle: full width, large tap targets, stays reachable while scrolling */
+  .view-toggle { align-self: stretch; position: sticky; top: 0; z-index: 900; }
+  .view-toggle-btn { flex: 1; min-height: 44px; padding: 6px 4px; font-size: 13px; }
   .facts { grid-template-columns: 96px minmax(0, 1fr); }
 
   .details {

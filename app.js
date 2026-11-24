@@ -33,12 +33,16 @@
   const STATUS_IDS = Object.keys(lookups.verificationStatuses);
   const orgById = new Map(organisations.map((o) => [o.organisationId, o]));
   const activityById = new Map(activities.map((a) => [a.activityId, a]));
+  // Programs and sites (each dated activity links to one of each).
+  const programById = new Map((DATA.programs || []).map((p) => [p.programId, p]));
+  const siteById = new Map((DATA.sites || []).map((s) => [s.siteId, s]));
 
   // Search text for each activity, built once.
   const searchIndex = new Map(activities.map((a) => {
     const org = orgById.get(a.organisationId);
+    const site = siteById.get(a.siteId);
     const text = [
-      a.activityId, a.activityName, a.description, a.suburb, a.lga,
+      a.activityId, a.activityName, a.description, a.suburb, a.lga, site ? site.siteName : '',
       org ? org.organisationName : '', org ? org.organisationId : '',
       lookups.categories[a.category].label,
       lookups.verificationStatuses[a.verificationStatus].label,
@@ -367,44 +371,100 @@
     markerLayer.clearLayers();
     markers.clear();
 
-    // Several activities can share one location (e.g. the same weekly pantry).
+    // Repeated sessions of one program at one site (with the same verification
+    // status) share a single pin, so a weekly program is not shown as many
+    // separate services. The register still lists every session.
+    const groups = new Map();
+    list.forEach((x) => {
+      const gk = x.programId && x.siteId ? `${x.programId}|${x.siteId}|${x.verificationStatus}` : x.activityId;
+      if (!groups.has(gk)) groups.set(gk, []);
+      groups.get(gk).push(x);
+    });
+
+    // Several pins can share one location (e.g. programs at one hub).
     // Spread them out slightly so each pin can still be clicked.
     const seen = new Map();
-    list.forEach((a) => {
+    groups.forEach((members) => {
+      members.sort(sorters.when);
+      const a = members[0];
+      const n = members.length;
       let lat = a.location.latitude;
       let lng = a.location.longitude;
       const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
-      const n = seen.get(key) || 0;
-      seen.set(key, n + 1);
-      if (n > 0) {
-        const angle = n * 2.4;
-        const r = 0.00032 * Math.sqrt(n);
+      const k = seen.get(key) || 0;
+      seen.set(key, k + 1);
+      if (k > 0) {
+        const angle = k * 2.4;
+        const r = 0.00032 * Math.sqrt(k);
         lat += r * Math.sin(angle);
         lng += r * Math.cos(angle) * 1.2;
       }
 
-      const selected = a.activityId === state.selectedId;
+      const ids = members.map((m) => m.activityId);
+      const selected = ids.includes(state.selectedId);
       const marker = L.marker([lat, lng], {
         icon: pinIcon(a, selected),
-        title: `${a.activityName}, ${fmtShortDate(a.date)}`,
+        title: n > 1 ? `${a.activityName}, ${n} sessions` : `${a.activityName}, ${fmtShortDate(a.date)}`,
         alt: a.activityName,
         keyboard: true,
         riseOnHover: true,
         zIndexOffset: selected ? 1000 : 0
       });
-      marker.bindTooltip(
-        `<strong>${esc(a.activityName)}</strong><br>${esc(fmtShortDate(a.date))} · ${esc(timeRange(a))}${isEvening(a) ? ' · Evening' : ''}<br>${esc(orgName(a))}<br><em>${esc(status(a.verificationStatus).shortLabel)} (sample)</em>`,
+      const site = siteById.get(a.siteId);
+      marker.bindTooltip(n > 1
+        ? `<strong>${esc(a.activityName)}</strong><br>${n} scheduled sessions here in the current filters<br>Next: ${esc(fmtShortDate(a.date))} · ${esc(timeRange(a))}${site ? `<br>${esc(site.siteName)}` : ''}<br>${esc(orgName(a))}<br><em>${esc(status(a.verificationStatus).shortLabel)} (sample)</em>`
+        : `<strong>${esc(a.activityName)}</strong><br>${esc(fmtShortDate(a.date))} · ${esc(timeRange(a))}${isEvening(a) ? ' · Evening' : ''}<br>${esc(orgName(a))}<br><em>${esc(status(a.verificationStatus).shortLabel)} (sample)</em>`,
         { direction: 'top' }
       );
-      marker.on('click', () => selectActivity(a.activityId, { pan: false }));
-      marker.on('keypress', (e) => { if (e.originalEvent.key === 'Enter') selectActivity(a.activityId, { pan: false }); });
+      const pick = () => selectActivity(ids.includes(state.selectedId) ? state.selectedId : a.activityId, { pan: false });
+      marker.on('click', pick);
+      marker.on('keypress', (e) => { if (e.originalEvent.key === 'Enter') pick(); });
+      marker.onnowGroup = { rep: a, ids };
       markerLayer.addLayer(marker);
-      markers.set(a.activityId, marker);
+      ids.forEach((id) => markers.set(id, marker));
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Map / Register view switching                                       */
+  /* ------------------------------------------------------------------ */
+
+  // The map can't measure itself while hidden, so map moves requested while the
+  // Register view is showing are remembered and carried out when the map reappears.
+  let currentView = 'map';
+  let pendingFit = false;
+  let pendingFocus = false;
+  const isMapVisible = () => currentView !== 'register';
+
+  function setView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-toggle-btn').forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(btn.dataset.view === view));
+    });
+    // Combined View shows both panels, exactly as in the original dashboard.
+    $('map-view').hidden = view === 'register';
+    $('register-view').hidden = view === 'map';
+
+    if (view !== 'register' && map) {
+      map.invalidateSize();
+      if (pendingFit) { pendingFit = false; fitMapTo(state.filtered); }
+      if (pendingFocus && state.selectedId) {
+        const m = markers.get(state.selectedId);
+        if (m) map.setView(m.getLatLng(), Math.max(map.getZoom(), 15));
+      }
+      pendingFocus = false;
+    }
+  }
+
+  function wireViewToggle() {
+    document.querySelectorAll('.view-toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', () => { if (btn.dataset.view !== currentView) setView(btn.dataset.view); });
     });
   }
 
   function fitMapTo(list) {
     if (!map || !list.length) return;
+    if (!isMapVisible()) { pendingFit = true; return; }
     const bounds = L.latLngBounds(list.map((a) => [a.location.latitude, a.location.longitude]));
     map.fitBounds(bounds, { padding: [36, 36], maxZoom: 15 });
   }
@@ -414,8 +474,8 @@
     [prevId, state.selectedId].forEach((id) => {
       const m = id && markers.get(id);
       if (!m) return;
-      const sel = id === state.selectedId;
-      m.setIcon(pinIcon(activityById.get(id), sel));
+      const sel = m.onnowGroup ? m.onnowGroup.ids.includes(state.selectedId) : id === state.selectedId;
+      m.setIcon(pinIcon(m.onnowGroup ? m.onnowGroup.rep : activityById.get(id), sel));
       m.setZIndexOffset(sel ? 1000 : 0);
     });
   }
@@ -426,6 +486,7 @@
 
   function renderStats(list) {
     $('stat-total').textContent = list.length;
+    $('stat-programs').textContent = new Set(list.map((a) => a.programId || a.activityId)).size;
     $('stat-orgs').textContent = new Set(list.map((a) => a.organisationId)).size;
     STATUS_IDS.forEach((id) => {
       $(`stat-${id}`).textContent = list.filter((a) => a.verificationStatus === id).length;
@@ -454,7 +515,7 @@
       state.filters.eveningOnly = saved;
     }
 
-    el.resultCount.textContent =`Showing ${list.length} of ${activities.length} fictional activities`;
+    el.resultCount.textContent =`Showing ${list.length} of ${activities.length} fictional scheduled sessions`;
     const active = activeFilterCount();
     el.filtersToggleCount.textContent = active ? `${active} active · ${list.length} shown` : `${list.length} shown`;
   }
@@ -559,16 +620,43 @@
       confirmationText = 'Not confirmed by provider<span class="sub">No provider confirmation is recorded for this activity.</span>';
     }
 
+    // Same place, same day (a site can host many sessions across the month).
     const sameLocation = activities
-      .filter((x) => x.activityId !== a.activityId
+      .filter((x) => x.activityId !== a.activityId && x.date === a.date
         && x.location.latitude.toFixed(4) === a.location.latitude.toFixed(4)
         && x.location.longitude.toFixed(4) === a.location.longitude.toFixed(4))
       .sort(sorters.when);
-    const sameOrg = activities
-      .filter((x) => x.organisationId === a.organisationId && x.activityId !== a.activityId && !sameLocation.includes(x))
+    const program = programById.get(a.programId);
+    const site = siteById.get(a.siteId);
+    const after = (x) => (x.date + x.startTime) > (a.date + a.startTime);
+    const nextSessions = activities
+      .filter((x) => x.programId && x.programId === a.programId && x.activityId !== a.activityId && after(x))
       .sort(sorters.when)
       .slice(0, 4);
+    // One representative session (next on or after this date, else earliest) per other program.
+    const repFor = (list) => {
+      const byProgram = new Map();
+      list.slice().sort(sorters.when).forEach((x) => {
+        const cur = byProgram.get(x.programId);
+        if (!cur || (cur.date < a.date && x.date >= a.date)) byProgram.set(x.programId, x);
+      });
+      return [...byProgram.values()];
+    };
+    const otherProgramsAtSite = site ? repFor(activities.filter((x) => x.siteId === site.siteId && x.programId !== a.programId)) : [];
+    const otherOrgPrograms = repFor(activities.filter((x) => x.organisationId === a.organisationId && x.programId && x.programId !== a.programId));
     const orgActivityCount = activities.filter((x) => x.organisationId === a.organisationId).length;
+    const orgProgramCount = new Set(activities.filter((x) => x.organisationId === a.organisationId).map((x) => x.programId || x.activityId)).size;
+    const programList = (list) => (!list.length ? '<p class="hint">None in the sample data.</p>' : `<ul class="related">${list.map((r) => `
+      <li><button type="button" data-select="${esc(r.activityId)}">
+        <span class="r-name">${esc(r.activityName)}</span>
+        <span class="r-meta">${esc(orgName(r))} · next ${esc(fmtShortDate(r.date))} · ${esc(timeRange(r))} ${statusBadge(r.verificationStatus)}</span>
+      </button></li>`).join('')}</ul>`);
+    const deliveryText = !program ? '' : program.deliveryMode === 'mobile'
+      ? `Mobile service · visits ${program.siteIds.length} location${program.siteIds.length === 1 ? '' : 's'}`
+      : (program.siteIds.length > 1 ? `Fixed service · delivered at ${program.siteIds.length} locations` : 'Fixed-site service');
+    const siteText = !site ? '' : site.siteType === 'fixed'
+      ? `Community site operated by ${(orgById.get(site.hostOrganisationId) || {}).organisationName || 'unknown'}`
+      : site.siteType === 'mobile_stop' ? 'Mobile stop (public place visited by a mobile service)' : 'Location recorded with this activity';
 
     el.details.innerHTML = `
       <div class="details-body">
@@ -595,6 +683,14 @@
           <dt>Suburb</dt><dd>${esc(a.suburb)}<span class="sub">${esc(a.lga)} LGA</span></dd>
           <dt>Location</dt><dd>${esc(a.location.description)}<span class="sub">Approximate point: ${a.location.latitude.toFixed(4)}, ${a.location.longitude.toFixed(4)}</span></dd>
         </dl>
+${program ? `
+        <h3>Program and site</h3>
+        <dl class="facts">
+          <dt>Program</dt><dd>${esc(program.programName)}<span class="sub">${esc(deliveryText)} · run by ${esc(org ? org.organisationName : 'Unknown')}</span></dd>
+          <dt>Usual schedule</dt><dd>${esc(program.scheduleText)}</dd>
+          <dt>Sessions</dt><dd>${program.sessionCount} scheduled session${program.sessionCount === 1 ? '' : 's'} of this program in the sample<span class="sub">This is one session of the program, not a separate service</span></dd>
+          ${site ? `<dt>Site</dt><dd>${esc(site.siteName)}<span class="sub">${esc(siteText)}</span></dd>` : ''}
+        </dl>` : ''}
 
         <h3>About this activity</h3>
         <p>${esc(a.description)}</p>
@@ -611,7 +707,7 @@
           <dt>Name</dt><dd>${esc(org.organisationName)}</dd>
           <dt>Type</dt><dd>${esc(org.organisationType)}</dd>
           <dt>About</dt><dd>${esc(org.description)}</dd>
-          <dt>Activities</dt><dd>${orgActivityCount} in the sample data</dd>
+          <dt>Activities</dt><dd>${orgProgramCount} program${orgProgramCount === 1 ? '' : 's'} · ${orgActivityCount} scheduled session${orgActivityCount === 1 ? '' : 's'} in the sample data</dd>
         </dl>
 
         <h3>Provider contact details <span class="sample-tag">Fictional</span></h3>
@@ -624,20 +720,28 @@
           </dl>
         </div>
 
-        <h3>Other activities at this location</h3>
+        <h3>Other activities at this location on the same day</h3>
         ${relatedList(sameLocation)}
 
-        <h3>Other activities by this organisation</h3>
-        ${relatedList(sameOrg)}
+        ${site && site.siteType !== 'recorded_location' ? `<h3>Other programs at ${esc(site.siteName)}</h3>
+        ${programList(otherProgramsAtSite)}` : ''}
+
+        <h3>Next sessions of this program</h3>
+        ${relatedList(nextSessions)}
+
+        <h3>Other programs by this organisation</h3>
+        ${programList(otherOrgPrograms)}
 
         <details class="record">
           <summary>View data record (database structure)</summary>
           <div class="record-inner">
-            <p>How this activity is stored. Organisations are kept in a separate table and linked by <code>organisationId</code>.</p>
+            <p>How this activity is stored. Each dated session links to an organisation, a program and a site by <code>organisationId</code>, <code>programId</code> and <code>siteId</code>.</p>
             <h4>Activity record</h4>
             ${recordTable(a)}
             <h4>Linked organisation record</h4>
             ${recordTable(org)}
+            ${program ? `<h4>Linked program record</h4>${recordTable(program)}` : ''}
+            ${site ? `<h4>Linked site record</h4>${recordTable(site)}` : ''}
           </div>
         </details>
       </div>`;
@@ -659,7 +763,9 @@
     renderDetails(a);
     el.details.scrollTop = 0;
 
-    if (pan && map) {
+    if (pan && map && !isMapVisible()) {
+      pendingFocus = true;
+    } else if (pan && map) {
       const m = markers.get(id);
       const target = m ? m.getLatLng() : [a.location.latitude, a.location.longitude];
       map.flyTo(target, Math.max(map.getZoom(), 15), { duration: 0.6 });
@@ -719,6 +825,8 @@
   wireFilterControls();
   wireTable();
   wireDetails();
+  wireViewToggle();
+  setView(isPhone() ? 'map' : 'combined'); // default: Map View on phones, Combined View otherwise
   initMap();
   renderPlaceholder();
   update({ fit: true });

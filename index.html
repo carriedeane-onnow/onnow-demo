@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="analysis.css">
 </head>
 <body>
 
@@ -33,10 +34,17 @@
     </div>
   </header>
 
+  <!-- Primary navigation (Explore Activities | Service Analysis) -->
+  <nav class="primary-nav" aria-label="OnNow sections">
+    <button type="button" class="primary-tab" data-tab="explore" aria-pressed="true">Explore Activities</button>
+    <button type="button" class="primary-tab" data-tab="analysis" aria-pressed="false" aria-controls="service-analysis">Service Analysis</button>
+  </nav>
+
   <section class="stats" aria-label="Summary of activities matching the current filters">
     <div class="stat">
       <span class="stat-value" id="stat-total">0</span>
-      <span class="stat-label">Activities shown</span>
+      <span class="stat-label">Scheduled sessions shown</span>
+      <span class="stat-label"><em>from <strong id="stat-programs">0</strong> programs</em></span>
     </div>
     <div class="stat">
       <span class="stat-value" id="stat-orgs">0</span>
@@ -76,7 +84,7 @@
       <div class="field">
         <label for="date-preset">Date</label>
         <select id="date-preset">
-          <option value="all">All dates in sample (14 days)</option>
+          <option value="all">All dates in sample</option>
           <option value="today">Today (demo date)</option>
           <option value="tomorrow">Tomorrow</option>
           <option value="next7">Next 7 days</option>
@@ -121,7 +129,13 @@
 
     <!-- ===== Map + register ===== -->
     <section class="content">
-      <div class="panel map-panel">
+      <div class="view-toggle" role="group" aria-label="Choose dashboard view">
+        <button type="button" class="view-toggle-btn" data-view="map" aria-pressed="true" aria-controls="map-view">Map View</button>
+        <button type="button" class="view-toggle-btn" data-view="register" aria-pressed="false" aria-controls="register-view">Register View</button>
+        <button type="button" class="view-toggle-btn" data-view="combined" aria-pressed="false" aria-controls="map-view register-view">Combined View</button>
+      </div>
+
+      <div class="panel map-panel" id="map-view">
         <div class="panel-head">
           <h2>Activity map</h2>
           <button type="button" class="btn-secondary" id="fit-map">Fit map to results</button>
@@ -130,7 +144,7 @@
         <div class="legend" id="legend" aria-label="Map legend"></div>
       </div>
 
-      <div class="panel register">
+      <div class="panel register" id="register-view" hidden>
         <div class="panel-head">
           <h2>Activity register</h2>
           <p class="result-count" id="result-count" aria-live="polite"></p>
@@ -161,6 +175,106 @@
     <aside class="details panel" id="details" aria-label="Activity details" tabindex="-1"></aside>
   </main>
 
+  <!-- ===== Service Analysis tab (content is built by analysis.js) ===== -->
+  <section class="sa" id="service-analysis" hidden aria-labelledby="sa-title">
+    <div class="panel sa-intro">
+      <h2 id="sa-title">Service Analysis</h2>
+      <p>See when and where recorded community activities are scheduled at the same time, so agencies can spot potential coordination opportunities.</p>
+      <p class="sa-disclaimer"><strong>Fictional demonstration.</strong> All results are calculated from the fictional sample data. They cannot establish actual service coverage, community need or duplication. Scheduled activity is not the same as provider confirmed activity.</p>
+    </div>
+
+    <div class="panel sa-controls" role="group" aria-label="Analysis settings">
+      <div class="sa-field">
+        <label for="sa-council">Council area</label>
+        <select id="sa-council"></select>
+      </div>
+      <div class="sa-field">
+        <label for="sa-suburb">Suburb</label>
+        <select id="sa-suburb"></select>
+      </div>
+      <div class="sa-field">
+        <label for="sa-category">Service category</label>
+        <select id="sa-category"></select>
+      </div>
+      <div class="sa-field">
+        <label for="sa-period">Analysis period</label>
+        <select id="sa-period">
+          <option value="14">14 days from demo date</option>
+          <option value="30">30 days from demo date</option>
+          <option value="custom">Custom dates</option>
+        </select>
+      </div>
+      <div class="sa-field">
+        <label for="sa-from">From</label>
+        <input type="date" id="sa-from">
+      </div>
+      <div class="sa-field">
+        <label for="sa-to">To</label>
+        <input type="date" id="sa-to">
+      </div>
+      <div class="sa-field">
+        <label for="sa-day">Day for detailed analysis</label>
+        <select id="sa-day"></select>
+      </div>
+      <button type="button" class="link-btn sa-reset" id="sa-reset">Reset analysis</button>
+    </div>
+
+    <div class="sa-scope" id="sa-scope"></div>
+    <div class="sa-summary" id="sa-summary" aria-live="polite"></div>
+
+    <div class="sa-grid">
+      <section class="panel sa-overlaps" aria-labelledby="sa-overlaps-title">
+        <div class="panel-head">
+          <h2 id="sa-overlaps-title">Where Activities Overlap</h2>
+        </div>
+        <div class="sa-body" id="sa-overlaps"></div>
+      </section>
+
+      <section class="panel sa-map-panel" aria-labelledby="sa-map-title">
+        <div class="panel-head">
+          <h2 id="sa-map-title">Concentration of Recorded Activity</h2>
+        </div>
+        <div class="sa-body sa-map-controls" id="sa-map-controls"></div>
+        <div id="sa-map" role="region" aria-label="Map of scheduled activity concentration"></div>
+        <p class="sa-note" id="sa-map-note"></p>
+      </section>
+    </div>
+
+    <section class="panel sa-collab" aria-labelledby="sa-collab-title">
+      <div class="panel-head">
+        <h2 id="sa-collab-title">Potential Collaboration Opportunities</h2>
+      </div>
+      <div class="sa-body" id="sa-collab"></div>
+    </section>
+
+    <section class="panel sa-timeline-panel" aria-labelledby="sa-timeline-title">
+      <div class="panel-head">
+        <h2 id="sa-timeline-title">Daily Activity Timeline</h2>
+        <div class="sa-daynav">
+          <button type="button" class="btn-secondary" id="sa-prev-day" aria-label="Previous day">‹ Previous</button>
+          <button type="button" class="btn-secondary" id="sa-next-day" aria-label="Next day">Next ›</button>
+        </div>
+      </div>
+      <div class="sa-body" id="sa-timeline"></div>
+    </section>
+
+    <div class="sa-grid sa-grid--even">
+      <section class="panel" aria-labelledby="sa-gaps-title">
+        <div class="panel-head">
+          <h2 id="sa-gaps-title">Where Activity Is Not Recorded</h2>
+        </div>
+        <div class="sa-body" id="sa-gaps"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="sa-catchment-title">
+        <div class="panel-head">
+          <h2 id="sa-catchment-title">Delivered Here and Service Areas</h2>
+        </div>
+        <div class="sa-body" id="sa-catchment"></div>
+      </section>
+    </div>
+  </section>
+
   <div class="scrim" id="scrim" hidden></div>
 
   <footer class="footer">
@@ -172,5 +286,6 @@
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="sample-data.js"></script>
   <script src="app.js"></script>
+  <script src="analysis.js"></script>
 </body>
 </html>

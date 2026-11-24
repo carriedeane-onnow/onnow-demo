@@ -31,12 +31,15 @@ The data mirrors the tables a future OnNow database is likely to have:
   `location` (`latitude`, `longitude`, `description`), `date`, `startTime`, `finishTime`,
   `source`, `verificationStatus`, `lastConfirmedDate`, `isFictional`.
 - **`lookups`**: reference lists for categories, verification statuses and source types.
+- **`sites`**: physical places. Fixed sites, like a community hub, have a host organisation. Mobile stops are public places that a mobile service visits.
+- **`programs`**: one service run by one organisation, marked `fixed` or `mobile`. An organisation can run many programs, and a mobile program can visit many sites.
+- **`schedules`**: when a program runs at a site, for example weekdays from 12pm to 2pm. When the page loads, `sample-data.js` turns each schedule into one dated activity record per scheduled day, from 24 Nov to 23 Dec 2026 (`scheduleWindow`). Every activity links to its `programId` and `siteId`. The original one-off records are linked to programs and sites automatically, and the records themselves are unchanged.
 
 To see a record exactly as it's stored, open any activity in the dashboard and expand **"View data record"**.
 
 ## Service categories
 
-There are 11 categories: food relief, community meals, housing & homelessness, health clinics, mental health services, legal assistance, clothing assistance, laundry facilities, showers & hygiene, veterinary services and English language classes. Each map pin shows the category's colour and a short code (for example **L** for legal assistance or **EN** for English classes), so colour isn't the only cue.
+There are 12 categories: food relief, community meals, housing & homelessness, health clinics, mental health services, legal assistance, clothing assistance, laundry facilities, showers & hygiene, veterinary services, English language classes, and referrals & social support. Each map pin shows the category's colour and a short code (for example **L** for legal assistance or **EN** for English classes), so colour isn't the only cue.
 
 ## Evening filter
 

@@ -62,7 +62,8 @@ window.ONNOW_SAMPLE_DATA = {
       laundry:              { label: 'Laundry facilities',       glyph: 'LF', color: '#0369a1', description: 'Free washing and drying facilities.' },
       showers_hygiene:      { label: 'Showers & hygiene',        glyph: 'S',  color: '#0e7490', description: 'Showers, toiletries and hygiene packs.' },
       veterinary:           { label: 'Veterinary services',      glyph: 'V',  color: '#7c2d12', description: 'Free or low-cost pet health checks and treatment.' },
-      english_classes:      { label: 'English language classes', glyph: 'EN', color: '#334155', description: 'Conversation and English classes for adults.' }
+      english_classes:      { label: 'English language classes', glyph: 'EN', color: '#334155', description: 'Conversation and English classes for adults.' },
+      social_support:       { label: 'Referrals & social support', glyph: 'R',  color: '#a21caf', description: 'Drop-in social support, information and referrals.' }
     },
 
     // Order matters: strongest assurance first.
@@ -109,8 +110,86 @@ window.ONNOW_SAMPLE_DATA = {
     { organisationId: 'ORG-012', organisationName: 'Second Stitch Clothing Exchange', organisationType: 'Volunteer group', description: 'Free clothing store and seasonal clothing and school uniform swaps.', areasServed: ['Doonside', 'Westmead'], phone: '02 5550 0112', email: 'swap@secondstitch.example', website: 'www.secondstitch.example', isFictional: true },
     { organisationId: 'ORG-013', organisationName: 'Paws Together Community Vet Van', organisationType: 'Veterinary charity', description: 'Mobile vet van offering free pet health checks for people on low incomes or experiencing homelessness.', areasServed: ['Bidwill', 'Rydalmere', 'Quakers Hill'], phone: '02 5550 0113', email: 'woof@pawstogether.example', website: 'www.pawstogether.example', isFictional: true },
     { organisationId: 'ORG-014', organisationName: 'Common Ground English Circle', organisationType: 'Adult education provider', description: 'Free English conversation and beginner classes for adults, with childcare at some sessions.', areasServed: ['Harris Park', 'Blacktown', 'Seven Hills'], phone: '02 5550 0114', email: 'classes@commongroundenglish.example', website: 'www.commongroundenglish.example', isFictional: true },
-    { organisationId: 'ORG-015', organisationName: 'Fresh Start Hygiene Bus', organisationType: 'Charity', description: 'Converted bus providing free hot showers, hygiene packs and a mobile laundry.', areasServed: ['Parramatta', 'Mount Druitt', 'Harris Park'], phone: '02 5550 0115', email: 'bus@freshstarthygiene.example', website: 'www.freshstarthygiene.example', isFictional: true }
+    { organisationId: 'ORG-015', organisationName: 'Fresh Start Hygiene Bus', organisationType: 'Charity', description: 'Converted bus providing free hot showers, hygiene packs and a mobile laundry.', areasServed: ['Parramatta', 'Mount Druitt', 'Harris Park'], phone: '02 5550 0115', email: 'bus@freshstarthygiene.example', website: 'www.freshstarthygiene.example', isFictional: true },
+
+    // ---- Added for recurring-schedule demonstration (fixed sites and mobile providers) ----
+    { organisationId: 'ORG-016', organisationName: 'Banksia Lane Community Hub Inc.', organisationType: 'Neighbourhood centre', description: 'Community hub running meals, showers, a clothing room, housing referrals and social support from one site.', areasServed: ['Mount Druitt', 'Whalan', 'Bidwill'], phone: '02 5550 0116', email: 'hello@banksialanehub.example', website: 'www.banksialanehub.example', isFictional: true },
+    { organisationId: 'ORG-017', organisationName: 'Greenhaven Community Kitchen', organisationType: 'Charity', description: 'Volunteer kitchen serving a free community lunch every day of the week.', areasServed: ['Blacktown', 'Seven Hills'], phone: '02 5550 0117', email: 'lunch@greenhavenkitchen.example', website: 'www.greenhavenkitchen.example', isFictional: true },
+    { organisationId: 'ORG-018', organisationName: 'Coolabah Community Centre', organisationType: 'Neighbourhood centre', description: 'Community centre offering a weekday lunch and shower facilities.', areasServed: ['Mount Druitt', 'Rooty Hill'], phone: '02 5550 0118', email: 'info@coolabahcc.example', website: 'www.coolabahcc.example', isFictional: true },
+    { organisationId: 'ORG-019', organisationName: 'Harvest Wheels Mobile Pantry', organisationType: 'Charity', description: 'Mobile food van distributing groceries at several stops each week.', areasServed: ['Blacktown', 'Mount Druitt', 'Rooty Hill'], phone: '02 5550 0119', email: 'van@harvestwheels.example', website: 'www.harvestwheels.example', isFictional: true },
+    { organisationId: 'ORG-020', organisationName: 'Open Hands Food Truck', organisationType: 'Volunteer group', description: 'Food truck handing out free grocery packs and hot food at weekly stops.', areasServed: ['Blacktown', 'Mount Druitt', 'Rooty Hill'], phone: '02 5550 0120', email: 'truck@openhandsfood.example', website: 'www.openhandsfood.example', isFictional: true },
+    { organisationId: 'ORG-021', organisationName: 'Spin Cycle Mobile Laundry', organisationType: 'Charity', description: 'Mobile laundry van with washers and dryers, visiting five locations each week.', areasServed: ['Blacktown', 'Doonside', 'Mount Druitt', 'Rooty Hill'], phone: '02 5550 0121', email: 'wash@spincyclelaundry.example', website: 'www.spincyclelaundry.example', isFictional: true },
+    { organisationId: 'ORG-022', organisationName: 'Threads on Wheels', organisationType: 'Volunteer group', description: 'Mobile clothing van offering free clothes and shoes at weekly stops.', areasServed: ['Blacktown', 'Plumpton', 'Mount Druitt'], phone: '02 5550 0122', email: 'racks@threadsonwheels.example', website: 'www.threadsonwheels.example', isFictional: true }
   ],
+
+  // ===========================================================================
+  //  Sites, programs and weekly schedules (added)
+  //  - A SITE is a physical place. Fixed sites are hosted by an organisation;
+  //    mobile stops are public places a mobile service visits.
+  //  - A PROGRAM is one service run by one organisation (fixed or mobile).
+  //  - A SCHEDULE says when a program runs at a site. Dated occurrences are
+  //    generated from schedules at the bottom of this file.
+  //  All names, places and schedules are fictional.
+  // ===========================================================================
+  sites: [
+    { siteId: 'SITE-001', siteName: 'Banksia Lane Community Hub', siteType: 'fixed', hostOrganisationId: 'ORG-016', suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7712, longitude: 150.8152, description: 'Banksia Lane Community Hub (fictional venue)' }, isFictional: true },
+    { siteId: 'SITE-002', siteName: 'Greenhaven Community Kitchen', siteType: 'fixed', hostOrganisationId: 'ORG-017', suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7742, longitude: 150.9015, description: 'Greenhaven Community Kitchen (fictional venue)' }, isFictional: true },
+    { siteId: 'SITE-003', siteName: 'Coolabah Community Centre', siteType: 'fixed', hostOrganisationId: 'ORG-018', suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7638, longitude: 150.8262, description: 'Coolabah Community Centre (fictional venue)' }, isFictional: true },
+    { siteId: 'SITE-004', siteName: 'Blacktown civic plaza stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7700, longitude: 150.9070, description: 'Mobile stop: civic plaza, Blacktown (fictional)' }, isFictional: true },
+    { siteId: 'SITE-005', siteName: 'Mount Druitt shopping precinct stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7703, longitude: 150.8170, description: 'Mobile stop: shopping precinct car park, Mount Druitt (fictional)' }, isFictional: true },
+    { siteId: 'SITE-006', siteName: 'Rooty Hill station car park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Rooty Hill', lga: 'Blacktown', location: { latitude: -33.7705, longitude: 150.8445, description: 'Mobile stop: station car park, Rooty Hill (fictional)' }, isFictional: true },
+    { siteId: 'SITE-007', siteName: 'Mount Druitt community park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7672, longitude: 150.8235, description: 'Mobile stop: community park, Mount Druitt (fictional)' }, isFictional: true },
+    { siteId: 'SITE-008', siteName: 'Blacktown showground car park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7760, longitude: 150.9000, description: 'Mobile stop: showground car park, Blacktown (fictional)' }, isFictional: true },
+    { siteId: 'SITE-009', siteName: 'Doonside library car park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Doonside', lga: 'Blacktown', location: { latitude: -33.7660, longitude: 150.8700, description: 'Mobile stop: library car park, Doonside (fictional)' }, isFictional: true },
+    { siteId: 'SITE-010', siteName: 'Mount Druitt reserve car park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7655, longitude: 150.8280, description: 'Mobile stop: reserve car park, Mount Druitt (fictional)' }, isFictional: true },
+    { siteId: 'SITE-011', siteName: 'Blacktown reserve stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7755, longitude: 150.9030, description: 'Mobile stop: reserve car park, Blacktown (fictional)' }, isFictional: true },
+    { siteId: 'SITE-012', siteName: 'Plumpton shopping centre stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Plumpton', lga: 'Blacktown', location: { latitude: -33.7520, longitude: 150.8380, description: 'Mobile stop: shopping centre car park, Plumpton (fictional)' }, isFictional: true }
+  ],
+
+  programs: [
+    // Banksia Lane Community Hub: five programs at one fixed site (Kitchen A runs the lunch)
+    { programId: 'PRG-001', organisationId: 'ORG-016', programName: 'Community Lunch', category: 'community_meals', deliveryMode: 'fixed', description: 'Free hot two-course lunch. All welcome.', isFictional: true },
+    { programId: 'PRG-002', organisationId: 'ORG-016', programName: 'Hot Showers', category: 'showers_hygiene', deliveryMode: 'fixed', description: 'Private showers with towels and toiletries provided.', isFictional: true },
+    { programId: 'PRG-003', organisationId: 'ORG-016', programName: 'Clothing Room', category: 'clothing_assistance', deliveryMode: 'fixed', description: 'Free clothing, shoes and bedding from the hub clothing room.', isFictional: true },
+    { programId: 'PRG-004', organisationId: 'ORG-016', programName: 'Housing Referral Desk', category: 'housing_homelessness', deliveryMode: 'fixed', description: 'Housing information, applications and referrals with a caseworker.', isFictional: true },
+    { programId: 'PRG-005', organisationId: 'ORG-016', programName: 'Social Support Drop-in', category: 'social_support', deliveryMode: 'fixed', description: 'Drop-in with a support worker for a chat, information and referrals.', isFictional: true },
+    // Kitchen B (seven days) and Coolabah (Kitchen C + showers)
+    { programId: 'PRG-006', organisationId: 'ORG-017', programName: 'Community Lunch', category: 'community_meals', deliveryMode: 'fixed', description: 'Free cooked lunch every day of the week.', isFictional: true },
+    { programId: 'PRG-007', organisationId: 'ORG-018', programName: 'Community Lunch', category: 'community_meals', deliveryMode: 'fixed', description: 'Free weekday lunch in the centre dining room.', isFictional: true },
+    { programId: 'PRG-008', organisationId: 'ORG-018', programName: 'Shower Facilities', category: 'showers_hygiene', deliveryMode: 'fixed', description: 'Shower facilities with towels supplied.', isFictional: true },
+    // Mobile providers: one program each, several stops
+    { programId: 'PRG-009', organisationId: 'ORG-019', programName: 'Mobile Food Van', category: 'food_relief', deliveryMode: 'mobile', description: 'Free grocery packs and fresh produce from a mobile van.', isFictional: true },
+    { programId: 'PRG-010', organisationId: 'ORG-020', programName: 'Food Truck Distribution', category: 'food_relief', deliveryMode: 'mobile', description: 'Free grocery packs and hot food from a food truck.', isFictional: true },
+    { programId: 'PRG-011', organisationId: 'ORG-021', programName: 'Mobile Laundry', category: 'laundry', deliveryMode: 'mobile', description: 'Free washing and drying while you wait. Detergent supplied.', isFictional: true },
+    { programId: 'PRG-012', organisationId: 'ORG-022', programName: 'Mobile Clothing Van', category: 'clothing_assistance', deliveryMode: 'mobile', description: 'Free clothes and shoes from a mobile clothing van.', isFictional: true }
+  ],
+
+  // days: Mon, Tue, Wed, Thu, Fri, Sat, Sun. Each schedule runs for the 30-day demonstration period.
+  schedules: [
+    { scheduleId: 'SCH-001', programId: 'PRG-001', siteId: 'SITE-001', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], startTime: '12:00', finishTime: '14:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-20' },
+    { scheduleId: 'SCH-002', programId: 'PRG-002', siteId: 'SITE-001', days: ['Mon', 'Tue', 'Thu', 'Fri'], startTime: '09:00', finishTime: '12:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-20' },
+    { scheduleId: 'SCH-003', programId: 'PRG-003', siteId: 'SITE-001', days: ['Mon', 'Wed', 'Fri'], startTime: '10:00', finishTime: '13:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-004', programId: 'PRG-004', siteId: 'SITE-001', days: ['Tue', 'Thu'], startTime: '10:00', finishTime: '14:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-20' },
+    { scheduleId: 'SCH-005', programId: 'PRG-005', siteId: 'SITE-001', days: ['Mon', 'Wed'], startTime: '13:00', finishTime: '15:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-006', programId: 'PRG-006', siteId: 'SITE-002', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], startTime: '11:30', finishTime: '13:30', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-007', programId: 'PRG-007', siteId: 'SITE-003', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], startTime: '12:30', finishTime: '14:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-18' },
+    { scheduleId: 'SCH-008', programId: 'PRG-008', siteId: 'SITE-003', days: ['Tue', 'Thu'], startTime: '10:00', finishTime: '13:00', source: 'community_report', verificationStatus: 'unverified', lastConfirmedDate: null },
+    { scheduleId: 'SCH-009', programId: 'PRG-009', siteId: 'SITE-004', days: ['Mon'], startTime: '11:00', finishTime: '13:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-21' },
+    { scheduleId: 'SCH-010', programId: 'PRG-009', siteId: 'SITE-005', days: ['Wed'], startTime: '12:00', finishTime: '14:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-21' },
+    { scheduleId: 'SCH-011', programId: 'PRG-009', siteId: 'SITE-006', days: ['Fri'], startTime: '14:00', finishTime: '16:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-21' },
+    { scheduleId: 'SCH-012', programId: 'PRG-010', siteId: 'SITE-007', days: ['Tue'], startTime: '12:00', finishTime: '13:30', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-013', programId: 'PRG-010', siteId: 'SITE-006', days: ['Thu'], startTime: '10:00', finishTime: '12:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-014', programId: 'PRG-010', siteId: 'SITE-008', days: ['Sat'], startTime: '11:00', finishTime: '13:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-015', programId: 'PRG-011', siteId: 'SITE-004', days: ['Mon'], startTime: '09:00', finishTime: '12:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-016', programId: 'PRG-011', siteId: 'SITE-009', days: ['Tue'], startTime: '10:00', finishTime: '13:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-017', programId: 'PRG-011', siteId: 'SITE-001', days: ['Wed'], startTime: '11:30', finishTime: '14:30', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-19' },
+    { scheduleId: 'SCH-018', programId: 'PRG-011', siteId: 'SITE-010', days: ['Thu'], startTime: '11:00', finishTime: '14:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-019', programId: 'PRG-011', siteId: 'SITE-006', days: ['Fri'], startTime: '09:00', finishTime: '12:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-020', programId: 'PRG-012', siteId: 'SITE-011', days: ['Mon'], startTime: '12:00', finishTime: '14:00', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null },
+    { scheduleId: 'SCH-021', programId: 'PRG-012', siteId: 'SITE-012', days: ['Wed'], startTime: '10:00', finishTime: '12:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-022', programId: 'PRG-012', siteId: 'SITE-007', days: ['Sat'], startTime: '10:00', finishTime: '12:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null }
+  ],
+  scheduleWindow: { from: '2026-11-24', to: '2026-12-23' }, // 30 consecutive days
 
   activities: [
     // ---------------- ORG-001 Wattle Street Community Pantry ----------------
@@ -192,8 +271,8 @@ window.ONNOW_SAMPLE_DATA = {
     // ---------------- ORG-011 Saltbush Free Legal Help ----------------
     { activityId: 'ACT-0049', organisationId: 'ORG-011', activityName: 'Free Legal Advice Night', description: 'Free 20-minute appointments with a volunteer lawyer on tenancy, fines, debt and family law. Walk-ins welcome.', category: 'legal_assistance', suburb: 'Parramatta', lga: 'Parramatta', location: { latitude: -33.8150, longitude: 151.0050, description: 'Meeting rooms above a community building (fictional venue)' }, date: '2026-11-25', startTime: '18:00', finishTime: '20:30', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-20', isFictional: true },
     { activityId: 'ACT-0050', organisationId: 'ORG-011', activityName: 'Free Legal Advice Night', description: 'Free 20-minute appointments with a volunteer lawyer on tenancy, fines, debt and family law. Walk-ins welcome.', category: 'legal_assistance', suburb: 'Parramatta', lga: 'Parramatta', location: { latitude: -33.8150, longitude: 151.0050, description: 'Meeting rooms above a community building (fictional venue)' }, date: '2026-12-02', startTime: '18:00', finishTime: '20:30', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null, isFictional: true },
-    { activityId: 'ACT-0051', organisationId: 'ORG-011', activityName: 'Fines & Debt Legal Help Pop-up', description: 'Help with unpaid fines, debt letters and payment plans.', category: 'legal_assistance', suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7680, longitude: 150.8200, description: 'Community centre interview room (fictional venue)' }, date: '2026-11-27', startTime: '10:00', finishTime: '13:00', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null, isFictional: true },
-    { activityId: 'ACT-0052', organisationId: 'ORG-011', activityName: 'Tenancy Rights Clinic', description: 'Advice for renters on repairs, rent increases, bonds and eviction notices.', category: 'legal_assistance', suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7705, longitude: 150.9070, description: 'Library study room (fictional venue)' }, date: '2026-12-01', startTime: '13:00', finishTime: '16:00', source: 'council_directory', verificationStatus: 'published', lastConfirmedDate: null, isFictional: true },
+    { activityId: 'ACT-0051', organisationId: 'ORG-011', activityName: 'Fines & Debt Legal Help Pop-up', description: 'Help with unpaid fines, debt letters and payment plans.', category: 'legal_assistance', suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7680, longitude: 150.8200, description: 'Community centre interview room (fictional venue)' }, date: '2027-01-08', startTime: '10:00', finishTime: '13:00', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null, isFictional: true },
+    { activityId: 'ACT-0052', organisationId: 'ORG-011', activityName: 'Tenancy Rights Clinic', description: 'Advice for renters on repairs, rent increases, bonds and eviction notices.', category: 'legal_assistance', suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7705, longitude: 150.9070, description: 'Library study room (fictional venue)' }, date: '2027-01-12', startTime: '13:00', finishTime: '16:00', source: 'council_directory', verificationStatus: 'published', lastConfirmedDate: null, isFictional: true },
 
     // ---------------- ORG-012 Second Stitch Clothing Exchange ----------------
     { activityId: 'ACT-0053', organisationId: 'ORG-012', activityName: 'Free Clothing Store', description: 'Choose up to ten free items of clothing and shoes per visit. Adult and children sizes.', category: 'clothing_assistance', suburb: 'Doonside', lga: 'Blacktown', location: { latitude: -33.7665, longitude: 150.8690, description: 'Shopfront in a small retail strip (fictional venue)' }, date: '2026-11-26', startTime: '10:00', finishTime: '14:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-22', isFictional: true },
@@ -216,6 +295,128 @@ window.ONNOW_SAMPLE_DATA = {
     { activityId: 'ACT-0067', organisationId: 'ORG-014', activityName: 'Evening English Conversation Class', description: 'Relaxed conversation practice for adults at all levels. Free, no enrolment needed.', category: 'english_classes', suburb: 'Harris Park', lga: 'Parramatta', location: { latitude: -33.8236, longitude: 151.0102, description: 'Community classroom (fictional venue)' }, date: '2026-12-01', startTime: '18:00', finishTime: '20:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-18', isFictional: true },
     { activityId: 'ACT-0068', organisationId: 'ORG-014', activityName: 'Beginner English for Parents', description: 'Beginner English for parents and carers, with free childcare during class.', category: 'english_classes', suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7688, longitude: 150.9112, description: 'Library meeting room (fictional venue)' }, date: '2026-11-26', startTime: '09:30', finishTime: '11:30', source: 'council_directory', verificationStatus: 'published', lastConfirmedDate: null, isFictional: true },
     { activityId: 'ACT-0069', organisationId: 'ORG-014', activityName: 'Beginner English for Parents', description: 'Beginner English for parents and carers, with free childcare during class.', category: 'english_classes', suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7688, longitude: 150.9112, description: 'Library meeting room (fictional venue)' }, date: '2026-12-03', startTime: '09:30', finishTime: '11:30', source: 'council_directory', verificationStatus: 'published', lastConfirmedDate: null, isFictional: true },
-    { activityId: 'ACT-0070', organisationId: 'ORG-014', activityName: 'Job-ready English Workshop', description: 'English for job applications, interviews and workplace conversations.', category: 'english_classes', suburb: 'Seven Hills', lga: 'Blacktown', location: { latitude: -33.7760, longitude: 150.9360, description: 'Community centre classroom (fictional venue)' }, date: '2026-12-07', startTime: '18:30', finishTime: '20:30', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null, isFictional: true }
+    { activityId: 'ACT-0070', organisationId: 'ORG-014', activityName: 'Job-ready English Workshop', description: 'English for job applications, interviews and workplace conversations.', category: 'english_classes', suburb: 'Seven Hills', lga: 'Blacktown', location: { latitude: -33.7760, longitude: 150.9360, description: 'Community centre classroom (fictional venue)' }, date: '2026-12-07', startTime: '18:30', finishTime: '20:30', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null, isFictional: true },
+
+    // ---------------- Service Analysis demonstration (added) ----------------
+    // Two extra fictional occurrences so that three food relief activities are
+    // scheduled at the same time in Rooty Hill (with ACT-0025) on 24 Nov.
+    { activityId: 'ACT-0072', organisationId: 'ORG-008', activityName: 'Pop-up Food Rescue Stall', description: 'Free rescued groceries from a pop-up trailer while stocks last.', category: 'food_relief', suburb: 'Rooty Hill', lga: 'Blacktown', location: { latitude: -33.7698, longitude: 150.8442, description: 'Car park beside a community centre (fictional)' }, date: '2026-11-24', startTime: '14:30', finishTime: '16:30', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null, isFictional: true },
+    { activityId: 'ACT-0073', organisationId: 'ORG-001', activityName: 'Emergency Food Hamper Pick-up', description: 'Pre-packed emergency hampers for households in immediate need. Limited numbers each session.', category: 'food_relief', suburb: 'Rooty Hill', lga: 'Blacktown', location: { latitude: -33.7718, longitude: 150.8470, description: 'Meeting room at a sports club (fictional venue)' }, date: '2026-11-24', startTime: '15:30', finishTime: '17:30', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null, isFictional: true }
   ]
 };
+
+/*
+ * ---------------------------------------------------------------------------
+ *  Build the full set of dated occurrences
+ * ---------------------------------------------------------------------------
+ *  1. Every weekly schedule above is expanded into one activity record per
+ *     scheduled date inside `scheduleWindow` (24 Nov – 23 Dec 2026). Totals are
+ *     never hardcoded; they come from these generated records.
+ *  2. The original one-off records (ACT-xxxx) are linked to a program and a
+ *     site without editing them: records from the same organisation with the
+ *     same activity name form one program; records at the same coordinates
+ *     share one site. These sites have no host organisation recorded.
+ *  3. Each program and site gets a short summary used by the dashboard.
+ *
+ *  Note: the two Blacktown legal assistance sessions (ACT-0051, ACT-0052)
+ *  were moved to January 2027 so that the 30-day demonstration period has
+ *  no recorded legal assistance in Blacktown LGA (Story 3).
+ */
+(function buildOccurrences(D) {
+  const DAY_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const parse = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
+  const toISO = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  const fmtTime = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    const h12 = ((h + 11) % 12) + 1;
+    return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${h >= 12 ? 'pm' : 'am'}`;
+  };
+  const daysText = (days) => {
+    const sorted = DAY_ORDER.filter((d) => days.includes(d));
+    if (sorted.length === 7) return 'Every day';
+    if (sorted.join() === 'Mon,Tue,Wed,Thu,Fri') return 'Monday to Friday';
+    return sorted.join(', ');
+  };
+
+  const siteById = new Map(D.sites.map((s) => [s.siteId, s]));
+  const programById = new Map(D.programs.map((p) => [p.programId, p]));
+  const orgName = (id) => ((D.organisations.find((o) => o.organisationId === id) || {}).organisationName || '');
+
+  // 1. Expand weekly schedules into dated occurrences.
+  D.schedules.forEach((sc) => {
+    const p = programById.get(sc.programId);
+    const s = siteById.get(sc.siteId);
+    const wanted = sc.days.map((d) => DAY_INDEX[d]);
+    for (let d = parse(D.scheduleWindow.from); d <= parse(D.scheduleWindow.to); d.setDate(d.getDate() + 1)) {
+      if (!wanted.includes(d.getDay())) continue;
+      const date = toISO(d);
+      D.activities.push({
+        activityId: `OCC-${sc.scheduleId.slice(4)}-${date.replace(/-/g, '')}`,
+        organisationId: p.organisationId,
+        programId: p.programId,
+        siteId: s.siteId,
+        scheduleId: sc.scheduleId,
+        deliveryMode: p.deliveryMode,
+        activityName: p.programName,
+        description: p.description,
+        category: p.category,
+        suburb: s.suburb,
+        lga: s.lga,
+        location: { latitude: s.location.latitude, longitude: s.location.longitude, description: s.location.description },
+        date,
+        startTime: sc.startTime,
+        finishTime: sc.finishTime,
+        source: sc.source,
+        verificationStatus: sc.verificationStatus,
+        lastConfirmedDate: sc.lastConfirmedDate,
+        isFictional: true
+      });
+    }
+  });
+
+  // 2. Link original one-off records to programs and sites.
+  const programKey = new Map();
+  const siteKey = new Map();
+  D.activities.forEach((a) => {
+    if (a.programId) return;
+    const pk = `${a.organisationId}|${a.activityName}`;
+    if (!programKey.has(pk)) {
+      const id = `PRG-R${String(programKey.size + 1).padStart(2, '0')}`;
+      const mobile = /mobile|van\b|pop-up|bus\b/i.test(`${a.activityName} ${orgName(a.organisationId)}`);
+      programKey.set(pk, id);
+      D.programs.push({ programId: id, organisationId: a.organisationId, programName: a.activityName, category: a.category, deliveryMode: mobile ? 'mobile' : 'fixed', description: a.description, recordedAsOneOff: true, isFictional: true });
+    }
+    const sk = `${a.location.latitude.toFixed(4)},${a.location.longitude.toFixed(4)}`;
+    if (!siteKey.has(sk)) {
+      const id = `SITE-R${String(siteKey.size + 1).padStart(2, '0')}`;
+      siteKey.set(sk, id);
+      D.sites.push({ siteId: id, siteName: a.location.description, siteType: 'recorded_location', hostOrganisationId: null, suburb: a.suburb, lga: a.lga, location: Object.assign({}, a.location), isFictional: true });
+    }
+    a.programId = programKey.get(pk);
+    a.siteId = siteKey.get(sk);
+  });
+  D.programs.forEach((p) => programById.set(p.programId, p));
+  D.sites.forEach((s) => siteById.set(s.siteId, s));
+  D.activities.forEach((a) => { a.deliveryMode = programById.get(a.programId).deliveryMode; });
+
+  // 3. Summaries for programs and sites.
+  D.programs.forEach((p) => {
+    const occ = D.activities.filter((a) => a.programId === p.programId);
+    p.siteIds = [...new Set(occ.map((a) => a.siteId))];
+    p.sessionCount = occ.length;
+    const sch = D.schedules.filter((sc) => sc.programId === p.programId);
+    if (!sch.length) {
+      p.scheduleText = `Recorded as ${occ.length} individual dated session${occ.length === 1 ? '' : 's'} (no weekly schedule recorded)`;
+    } else if (sch.length === 1) {
+      p.scheduleText = `${daysText(sch[0].days)}, ${fmtTime(sch[0].startTime)} – ${fmtTime(sch[0].finishTime)} at ${siteById.get(sch[0].siteId).siteName}`;
+    } else {
+      const stops = sch.slice().sort((x, y) => DAY_ORDER.indexOf(x.days[0]) - DAY_ORDER.indexOf(y.days[0]))
+        .map((sc) => `${daysText(sc.days)} ${fmtTime(sc.startTime)} – ${fmtTime(sc.finishTime)}: ${siteById.get(sc.siteId).siteName}`);
+      p.scheduleText = `Visits ${new Set(sch.map((sc) => sc.siteId)).size} locations weekly. ${stops.join('; ')}`;
+    }
+  });
+  D.sites.forEach((s) => {
+    s.programIds = [...new Set(D.activities.filter((a) => a.siteId === s.siteId).map((a) => a.programId))];
+  });
+})(window.ONNOW_SAMPLE_DATA);
