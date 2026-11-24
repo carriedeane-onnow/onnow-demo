@@ -1,66 +1,89 @@
-# OnNow: demonstration dashboard
+# OnNow: demonstration platform
 
-> **All data in this project is fictional.** Organisations, activities, locations, sources and verification statuses are made up for demonstration. No real provider has confirmed anything shown.
+> **All data in this project is fictional.** Organisations, services, locations, contact details, sources and verification statuses are made up for demonstration. No real provider has confirmed anything shown.
 
-OnNow is a live activity mapping and intelligence platform for community sector organisations, councils and government. This folder contains an early **demonstration dashboard** for the Western Sydney pilot (Blacktown and Parramatta).
+OnNow is a social service intelligence and collaboration platform for welfare organisations, interagency networks, councils and government. This folder contains a **demonstration** for the Western Sydney pilot (Blacktown City Council and the City of Parramatta).
+
+It has three pages, all sharing one header, one set of filters and one dataset:
+
+| Page | Purpose |
+|---|---|
+| **Explore Activities** | Find services: map, register, filters and details. |
+| **Service Insights** | Find opportunities: service overlaps, collaboration opportunities and recorded gaps, from a council view or an agency view. |
+| **Reports** | Plan and collaborate: council and agency reports, with a preview and an editable Word (.docx) download. |
 
 ## How to open it
 
 1. Open this folder (`Documents\OnNow`) in File Explorer.
 2. Double-click **`index.html`**. It opens in your web browser.
 
-You don't need to install anything. The map images come from OpenStreetMap, so the map needs an internet connection. Without one, the register, filters and details still work.
+You don't need to install anything. Map images come from OpenStreetMap, so maps need an internet connection. Everything else works offline.
 
 ## What's in the folder
 
 | File | What it does |
 |---|---|
-| `index.html` | The structure of the page: banner, header, filters, map, register and details panel. |
-| `styles.css` | How it looks: colours, layout, and how it rearranges on tablets and phones. |
-| `app.js` | How it behaves: filtering, searching, sorting, map pins and the details panel. |
-| `sample-data.js` | The **fictional** data, structured like a future database. |
+| `index.html` | Page structure: header, navigation, the three pages. |
+| `styles.css` | Visual identity (logo colours, typography, buttons, filters) and Explore Activities. |
+| `analysis.css` | Service Insights, Reports and collaboration graphics. |
+| `shared.js` | Brand palette, icon set, service category icons and colours, councils, shared filters, navigation. |
+| `analysis.js` | All calculations: overlaps, gaps and the seven collaboration opportunity types. |
+| `app.js` | Explore Activities. |
+| `insights.js` | Service Insights, and the collaboration diagrams. |
+| `reports.js` | Council and agency reports (preview and Word download). |
+| `docx.js` | Small built-in Word document writer (no external library). |
+| `sample-data.js` | The **fictional** data. |
+| `Colour-Logo-TAG400px.png` | The supplied OnNow logo (unchanged). |
+| `favicon.png` | Browser tab icon, cropped from the logo's speech-bubble "O". |
+| `logo-data.js` | An exact embedded copy of the logo, used for Word reports when the browser blocks reading the PNG (for example when `index.html` is opened by double-clicking). |
 | `README.md` | This guide. |
+
+## Service types
+
+There are 12 service categories, each with one permanent icon and colour used everywhere (maps, filters, register, insights, diagrams and reports). The colours and icons are defined once in `shared.js`.
+
+**Selecting service types:** choose one or more. **No selection means all service types**, on every page.
 
 ## How the data is structured
 
-The data mirrors the tables a future OnNow database is likely to have:
+- **`organisations`**: one record per organisation, with fictional contact details (`02 5550` phone numbers and `.example` web addresses).
+- **`sites`**: physical places. Fixed sites have a host organisation; mobile stops are public places a mobile service visits.
+- **`programs`**: one service run by one organisation, marked `fixed` or `mobile`.
+- **`schedules`**: when a program runs at a site. When the page loads, each schedule becomes one dated `activity` per scheduled day (24 Nov to 23 Dec 2026).
+- **`activities`**: one record per dated session, linked to its organisation, program and site.
 
-- **`organisations`**: one record per organisation (`organisationId`, name, type, description, areas served, `phone`, `email`, `website`). **Contact details are fictional.** Phone numbers use the `02 5550` range that Australia sets aside for fictional use, and emails and websites use the reserved `.example` domain.
-- **`activities`**: one record per **individual occurrence** of an activity. Each one links to its organisation through `organisationId`. Fields:
-  `activityId`, `organisationId`, `activityName`, `description`, `category`, `suburb`, `lga`,
-  `location` (`latitude`, `longitude`, `description`), `date`, `startTime`, `finishTime`,
-  `source`, `verificationStatus`, `lastConfirmedDate`, `isFictional`.
-- **`lookups`**: reference lists for categories, verification statuses and source types.
-- **`sites`**: physical places. Fixed sites, like a community hub, have a host organisation. Mobile stops are public places that a mobile service visits.
-- **`programs`**: one service run by one organisation, marked `fixed` or `mobile`. An organisation can run many programs, and a mobile program can visit many sites.
-- **`schedules`**: when a program runs at a site, for example weekdays from 12pm to 2pm. When the page loads, `sample-data.js` turns each schedule into one dated activity record per scheduled day, from 24 Nov to 23 Dec 2026 (`scheduleWindow`). Every activity links to its `programId` and `siteId`. The original one-off records are linked to programs and sites automatically, and the records themselves are unchanged.
+Counts are kept separate: scheduled sessions, unique programs, organisations and physical locations. A weekly program counts as one program; a mobile program visiting five places counts as one program at five locations.
 
-To see a record exactly as it's stored, open any activity in the dashboard and expand **"View data record"**.
+## Collaboration opportunities
 
-## Service categories
+Service Insights identifies seven types, using simple rules described on the page under "How opportunities are identified":
 
-There are 12 categories: food relief, community meals, housing & homelessness, health clinics, mental health services, legal assistance, clothing assistance, laundry facilities, showers & hygiene, veterinary services, English language classes, and referrals & social support. Each map pin shows the category's colour and a short code (for example **L** for legal assistance or **EN** for English classes), so colour isn't the only cue.
+1. Fixed site hosting a mobile service
+2. Mobile services operating together
+3. Multi-agency service hub (three or more organisations)
+4. Coordinating operating hours
+5. Coordinating geographic coverage
+6. Fixed organisation hosting a visiting provider
+7. Coordinated referral pathways
 
-## Evening filter
+Each is labelled **Existing complementary delivery**, **Potential collaboration** or **Requires further investigation**. "Nearby" means within 500 m in a straight line, and referral pathways use 2.5 km. Both are illustrative demonstration assumptions. No opportunity is a recommendation or a confirmed partnership.
 
-"Evening" is **not a category**. The dashboard works it out from each activity's start and finish times. An activity counts as evening if it operates **at any time between 6 pm and midnight**. For example, 5 pm–7 pm counts, but 4 pm–6 pm doesn't. To change the window, edit `eveningWindow` in `sample-data.js`. Evening activities show a dark **☾ Evening** tag in the register and in the details panel.
+## Word reports
+
+The Reports page builds a genuine Office Open XML (.docx) document in the browser. It includes real headings, paragraphs, bulleted lists and editable tables, page numbers, and the embedded OnNow logo, icons and diagrams. No external library, server or account is used.
 
 ## Verification statuses
 
-| Status | Meaning | `lastConfirmedDate` |
-|---|---|---|
-| **Provider confirmed** | The delivering organisation directly confirmed this specific activity. | The date the provider confirmed it |
-| **Published only** | Seen in a public source (website, directory, social media) but **not** confirmed by the provider. | `null` |
-| **Unverified** | Reported by a partner or community member and not yet checked. | `null` |
+| Status | Meaning |
+|---|---|
+| **Provider confirmed** | The delivering organisation directly confirmed the session. |
+| **Published only** | Seen in a public source, not confirmed by the provider. |
+| **Unverified** | Reported by a partner or community member, not yet checked. |
 
-On the map, a **solid pin with a ✓** means provider confirmed, a **pale pin with a solid ring** means published only, and a **white pin with a dashed ring** means unverified. Every status in this demo is fictional.
-
-## Changing the sample data
-
-Open `sample-data.js` in a text editor (Notepad works). Copy an existing activity line, give it a new `activityId`, change the details and save the file. Then refresh the browser page.
+Every status in this demo is fictional.
 
 The dashboard treats **24 November 2026** as "today" (`demoReferenceDate` in `sample-data.js`), so the demo looks the same whenever you open it.
 
 ## Not included yet (by design)
 
-The demo has no online hosting, no user accounts, no real agency data, no database server and no AI features.
+No online hosting, accounts or sign-in, messaging, real agency data, database server or AI features.

@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OnNow — Activity Intelligence Demo (Fictional Data)</title>
-  <meta name="description" content="OnNow demonstration dashboard. All data shown is fictional.">
+  <title>OnNow — Social Service Intelligence Demo (Fictional Data)</title>
+  <meta name="description" content="OnNow demonstration platform for welfare organisations, interagency networks and councils. All data shown is fictional.">
+  <link rel="icon" type="image/png" href="favicon.png">
 
   <!-- Leaflet: free, open-source map library (loaded from a public CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -13,269 +14,427 @@
   <link rel="stylesheet" href="analysis.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  <!-- Always-visible notice that this is a demonstration with fictional data -->
-  <div class="sample-banner" role="note">
-    <span class="sample-banner-tag">Demonstration</span>
-    <span><strong>All data is fictional.</strong> Organisations, activities, locations, contact details, sources and verification statuses are made up for demonstration. No real provider has confirmed anything shown here.</span>
-  </div>
-
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <div>
-        <h1>OnNow</h1>
-        <p class="brand-sub">Live community activity intelligence · Western Sydney pilot: Blacktown &amp; Parramatta</p>
-      </div>
-    </div>
-    <div class="topbar-meta">
-      <span class="meta-label">Demo reference date</span>
-      <strong id="demo-date">—</strong>
+  <!-- ===== Shared application header ===== -->
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="brand" href="#explore" aria-label="OnNow home: Explore Activities">
+        <img class="brand-logo" src="Colour-Logo-TAG400px.png" alt="OnNow: Instantly connecting communities" width="400" height="235">
+      </a>
+      <nav class="app-nav" aria-label="OnNow pages">
+        <button type="button" class="nav-tab" data-page="explore" aria-current="page">
+          <span class="nav-ico" data-icon="map" data-size="24"></span>
+          <span class="nav-text"><strong>Explore Activities</strong><small>Find services</small></span>
+        </button>
+        <button type="button" class="nav-tab" data-page="insights">
+          <span class="nav-ico" data-icon="insight" data-size="24"></span>
+          <span class="nav-text"><strong>Service Insights</strong><small>Find opportunities</small></span>
+        </button>
+        <button type="button" class="nav-tab" data-page="reports">
+          <span class="nav-ico" data-icon="report" data-size="24"></span>
+          <span class="nav-text"><strong>Reports</strong><small>Plan and collaborate</small></span>
+        </button>
+      </nav>
     </div>
   </header>
 
-  <!-- Primary navigation (Explore Activities | Service Analysis) -->
-  <nav class="primary-nav" aria-label="OnNow sections">
-    <button type="button" class="primary-tab" data-tab="explore" aria-pressed="true">Explore Activities</button>
-    <button type="button" class="primary-tab" data-tab="analysis" aria-pressed="false" aria-controls="service-analysis">Service Analysis</button>
-  </nav>
+  <!-- Compact, always-visible fictional data notice -->
+  <div class="demo-note" role="note">
+    <span class="demo-note-tag">Demonstration</span>
+    <span><strong>All data is fictional.</strong> Organisations, services, places, contacts and verification statuses are made up. Demo date: <strong id="demo-date">—</strong></span>
+  </div>
 
-  <section class="stats" aria-label="Summary of activities matching the current filters">
-    <div class="stat">
-      <span class="stat-value" id="stat-total">0</span>
-      <span class="stat-label">Scheduled sessions shown</span>
-      <span class="stat-label"><em>from <strong id="stat-programs">0</strong> programs</em></span>
-    </div>
-    <div class="stat">
-      <span class="stat-value" id="stat-orgs">0</span>
-      <span class="stat-label">Organisations delivering</span>
-    </div>
-    <div class="stat stat--provider_confirmed">
-      <span class="stat-value" id="stat-provider_confirmed">0</span>
-      <span class="stat-label">Provider confirmed <em>(sample)</em></span>
-    </div>
-    <div class="stat stat--published">
-      <span class="stat-value" id="stat-published">0</span>
-      <span class="stat-label">Published only <em>(not confirmed)</em></span>
-    </div>
-    <div class="stat stat--unverified">
-      <span class="stat-value" id="stat-unverified">0</span>
-      <span class="stat-label">Unverified</span>
-    </div>
-  </section>
+  <div id="main-content" tabindex="-1">
 
-  <main class="layout">
-    <button type="button" class="filters-toggle" id="filters-toggle" aria-expanded="false" aria-controls="filters">
-      <span>Filters</span><span class="filters-toggle-count" id="filters-toggle-count"></span>
-    </button>
-
-    <!-- ===== Filters ===== -->
-    <aside class="filters panel" id="filters" aria-label="Filters">
-      <div class="panel-head">
-        <h2>Filters</h2>
-        <button type="button" class="link-btn" id="reset-filters">Reset all</button>
+  <!-- =================================================================== -->
+  <!-- EXPLORE ACTIVITIES                                                   -->
+  <!-- =================================================================== -->
+  <main class="page" id="page-explore" aria-labelledby="ex-title">
+    <div class="page-head">
+      <span data-badge="map" data-size="52"></span>
+      <div>
+        <h1 id="ex-title">Explore Activities</h1>
+        <p>Find social and welfare services operating in your community.</p>
       </div>
+    </div>
 
-      <div class="field">
-        <label for="search">Search</label>
-        <input type="search" id="search" placeholder="Activity, organisation, suburb or ID" autocomplete="off">
-      </div>
-
-      <div class="field">
-        <label for="date-preset">Date</label>
-        <select id="date-preset">
-          <option value="all">All dates in sample</option>
-          <option value="today">Today (demo date)</option>
-          <option value="tomorrow">Tomorrow</option>
-          <option value="next7">Next 7 days</option>
-          <option value="specific">Choose a date…</option>
-        </select>
-      </div>
-      <div class="field" id="specific-date-field" hidden>
-        <label for="specific-date">Specific date</label>
-        <input type="date" id="specific-date">
-      </div>
-
-      <fieldset class="field">
-        <legend>Time of day</legend>
-        <label class="check">
-          <input type="checkbox" id="evening-only">
-          <span><span class="evening-tag">Evening</span> activities only</span>
-          <span class="count" id="evening-count"></span>
-        </label>
-        <p class="hint" id="evening-definition"><strong>Evening</strong> means an activity operates at any time between 6 pm and midnight, based on its start and finish times. It is a time filter, not a service category.</p>
-      </fieldset>
-
-      <div class="field">
-        <label for="suburb">Suburb</label>
-        <select id="suburb"></select>
-      </div>
-
-      <fieldset class="field">
-        <legend>Service category</legend>
-        <div class="check-actions">
-          <button type="button" class="link-btn" id="categories-all">Select all</button>
-          <button type="button" class="link-btn" id="categories-none">Clear all</button>
+    <section class="filter-bar" aria-label="Filters">
+      <div class="fb-row">
+        <div class="fb-field fb-search">
+          <label for="search">Search</label>
+          <div class="input-ico"><span data-icon="search"></span><input type="search" id="search" placeholder="Service, organisation, place or ID" autocomplete="off"></div>
         </div>
-        <div class="checks" id="category-options"></div>
-      </fieldset>
+        <div class="fb-field">
+          <label for="ex-council">Council</label>
+          <select id="ex-council"></select>
+        </div>
+        <div class="fb-field">
+          <label for="ex-suburb">Suburb</label>
+          <select id="ex-suburb"></select>
+        </div>
+        <div class="fb-field">
+          <label for="date-preset">Date</label>
+          <select id="date-preset">
+            <option value="all">All dates in sample</option>
+            <option value="today">Today (demo date)</option>
+            <option value="tomorrow">Tomorrow</option>
+            <option value="next7">Next 7 days</option>
+            <option value="next14">Next 14 days</option>
+            <option value="next30">Next 30 days</option>
+            <option value="specific">Choose a date…</option>
+          </select>
+        </div>
+        <div class="fb-field" id="specific-date-field" hidden>
+          <label for="specific-date">Specific date</label>
+          <input type="date" id="specific-date">
+        </div>
+        <div class="fb-field fb-services">
+          <span class="fb-label" id="ex-services-label">Service types</span>
+          <div id="ex-services" aria-labelledby="ex-services-label"></div>
+        </div>
+        <div class="fb-actions">
+          <button type="button" class="btn-outline" id="ex-more" aria-expanded="false" aria-controls="ex-more-panel">
+            <span data-icon="sliders"></span>More filters<span class="count-badge" id="ex-more-count" hidden></span>
+          </button>
+          <button type="button" class="link-btn" id="reset-filters">Reset</button>
+        </div>
+      </div>
+      <div class="chip-row" id="ex-chips" hidden></div>
+      <div class="more-panel" id="ex-more-panel" hidden>
+        <fieldset class="more-group">
+          <legend>Verification status</legend>
+          <div class="check-list" id="status-options"></div>
+          <p class="hint">Statuses in this demo are fictional examples, not real confirmations.</p>
+        </fieldset>
+        <fieldset class="more-group">
+          <legend>Time of day</legend>
+          <label class="check">
+            <input type="checkbox" id="evening-only">
+            <span><span class="evening-tag">Evening</span> activities only</span>
+            <span class="count" id="evening-count"></span>
+          </label>
+          <p class="hint" id="evening-definition"><strong>Evening</strong> means an activity operates at any time between 6 pm and midnight, based on its start and finish times. It is a time filter, not a service category.</p>
+        </fieldset>
+      </div>
+    </section>
 
-      <fieldset class="field">
-        <legend>Verification status</legend>
-        <div class="checks" id="status-options"></div>
-        <p class="hint">Statuses in this demo are fictional examples, not real confirmations.</p>
-      </fieldset>
-    </aside>
+    <section class="headline" aria-label="Summary of activities matching the current filters">
+      <div class="hl-card">
+        <span data-badge="schedule" data-size="44"></span>
+        <div><span class="hl-value" id="stat-total">0</span><span class="hl-label">Scheduled activities</span>
+          <span class="hl-sub">Dated sessions, from <strong id="stat-programs">0</strong> unique programs</span></div>
+      </div>
+      <div class="hl-card">
+        <span data-badge="agency" data-size="44"></span>
+        <div><span class="hl-value" id="stat-orgs">0</span><span class="hl-label">Organisations delivering</span>
+          <span class="hl-sub">Each organisation counted once</span></div>
+      </div>
+      <div class="hl-card">
+        <span data-badge="fixedSite" data-size="44"></span>
+        <div><span class="hl-value" id="stat-sites">0</span><span class="hl-label">Service locations</span>
+          <span class="hl-sub"><span id="stat-fixed">0</span> fixed sites · <span id="stat-mobile">0</span> mobile stops</span></div>
+      </div>
+      <details class="hl-more">
+        <summary><span data-icon="info" data-size="18"></span>About these figures and verification</summary>
+        <div class="hl-more-body">
+          <p>A <strong>scheduled activity</strong> is one dated session. A weekly program that runs on 20 days counts as 20 scheduled activities but <strong>one program</strong>. A mobile program that visits five places counts as one program at five <strong>service locations</strong>.</p>
+          <ul class="verif-list">
+            <li><span id="stat-provider_confirmed">0</span> <span class="status status--provider_confirmed">Provider confirmed</span> The provider confirmed the session (fictional example).</li>
+            <li><span id="stat-published">0</span> <span class="status status--published">Published only</span> Seen in a public source, not confirmed by the provider.</li>
+            <li><span id="stat-unverified">0</span> <span class="status status--unverified">Unverified</span> Reported by a partner or community member, not yet checked.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
 
-    <!-- ===== Map + register ===== -->
+    <div class="view-bar">
+      <div class="seg view-toggle" role="group" aria-label="Choose dashboard view">
+        <button type="button" class="view-toggle-btn" data-view="map" aria-pressed="true" aria-controls="map-view"><span data-icon="map" data-size="18"></span>Map</button>
+        <button type="button" class="view-toggle-btn" data-view="register" aria-pressed="false" aria-controls="register-view"><span data-icon="list" data-size="18"></span>Register</button>
+        <button type="button" class="view-toggle-btn" data-view="combined" aria-pressed="false" aria-controls="map-view register-view"><span data-icon="combined" data-size="18"></span>Combined</button>
+      </div>
+      <p class="result-count" id="result-count" aria-live="polite"></p>
+    </div>
+
     <section class="content">
-      <div class="view-toggle" role="group" aria-label="Choose dashboard view">
-        <button type="button" class="view-toggle-btn" data-view="map" aria-pressed="true" aria-controls="map-view">Map View</button>
-        <button type="button" class="view-toggle-btn" data-view="register" aria-pressed="false" aria-controls="register-view">Register View</button>
-        <button type="button" class="view-toggle-btn" data-view="combined" aria-pressed="false" aria-controls="map-view register-view">Combined View</button>
-      </div>
-
       <div class="panel map-panel" id="map-view">
-        <div class="panel-head">
-          <h2>Activity map</h2>
-          <button type="button" class="btn-secondary" id="fit-map">Fit map to results</button>
-        </div>
-        <div id="map" role="region" aria-label="Map of activity locations. Select a pin to see details."></div>
+        <div id="map" role="region" aria-label="Map of service locations. Select a marker to see details."></div>
         <div class="legend" id="legend" aria-label="Map legend"></div>
       </div>
 
       <div class="panel register" id="register-view" hidden>
-        <div class="panel-head">
+        <div class="register-head">
           <h2>Activity register</h2>
-          <p class="result-count" id="result-count" aria-live="polite"></p>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <caption class="visually-hidden">Fictional community activities matching the current filters. Select a row to see details.</caption>
-            <thead>
-              <tr>
-                <th scope="col" data-sort="when"><button type="button">When</button></th>
-                <th scope="col" data-sort="activity"><button type="button">Activity &amp; category</button></th>
-                <th scope="col" data-sort="organisation"><button type="button">Organisation</button></th>
-                <th scope="col" data-sort="suburb"><button type="button">Suburb</button></th>
-                <th scope="col" data-sort="status"><button type="button">Verification</button></th>
-              </tr>
-            </thead>
-            <tbody id="register-body"></tbody>
-          </table>
-          <div class="empty" id="register-empty" hidden>
-            <p><strong>No activities match these filters.</strong></p>
-            <p>Try widening the date range or clicking <em>Reset all</em>.</p>
+          <div class="register-tools">
+            <div class="seg seg--small" role="group" aria-label="Register presentation">
+              <button type="button" data-regmode="programs" aria-pressed="true">Programs and schedules</button>
+              <button type="button" data-regmode="sessions" aria-pressed="false">Scheduled activities</button>
+            </div>
+            <label class="sort-field"><span>Sort</span>
+              <select id="sort-key">
+                <option value="when">Date and time</option>
+                <option value="activity">Name</option>
+                <option value="organisation">Organisation</option>
+                <option value="suburb">Suburb</option>
+                <option value="status">Verification</option>
+              </select>
+            </label>
           </div>
         </div>
+        <div id="register-body"></div>
+        <div class="empty" id="register-empty" hidden>
+          <p><strong>No activities match these filters.</strong></p>
+          <p>Try widening the date range or select <em>Reset</em>.</p>
+        </div>
+        <div class="register-more" id="register-more"></div>
       </div>
     </section>
 
-    <!-- ===== Details panel ===== -->
-    <aside class="details panel" id="details" aria-label="Activity details" tabindex="-1"></aside>
+    <!-- Details drawer: opens only when something is selected -->
+    <aside class="drawer" id="details" aria-label="Activity details" tabindex="-1" hidden></aside>
+    <div class="scrim" id="scrim" hidden></div>
   </main>
 
-  <!-- ===== Service Analysis tab (content is built by analysis.js) ===== -->
-  <section class="sa" id="service-analysis" hidden aria-labelledby="sa-title">
-    <div class="panel sa-intro">
-      <h2 id="sa-title">Service Analysis</h2>
-      <p>See when and where recorded community activities are scheduled at the same time, so agencies can spot potential coordination opportunities.</p>
-      <p class="sa-disclaimer"><strong>Fictional demonstration.</strong> All results are calculated from the fictional sample data. They cannot establish actual service coverage, community need or duplication. Scheduled activity is not the same as provider confirmed activity.</p>
+  <!-- =================================================================== -->
+  <!-- SERVICE INSIGHTS                                                     -->
+  <!-- =================================================================== -->
+  <main class="page" id="page-insights" aria-labelledby="in-title" hidden>
+    <div class="page-head">
+      <span data-badge="insight" data-size="52"></span>
+      <div>
+        <h1 id="in-title">Service Insights</h1>
+        <p>Understand your service area and discover opportunities to work together.</p>
+      </div>
     </div>
 
-    <div class="panel sa-controls" role="group" aria-label="Analysis settings">
-      <div class="sa-field">
-        <label for="sa-council">Council area</label>
-        <select id="sa-council"></select>
-      </div>
-      <div class="sa-field">
-        <label for="sa-suburb">Suburb</label>
-        <select id="sa-suburb"></select>
-      </div>
-      <div class="sa-field">
-        <label for="sa-category">Service category</label>
-        <select id="sa-category"></select>
-      </div>
-      <div class="sa-field">
-        <label for="sa-period">Analysis period</label>
-        <select id="sa-period">
-          <option value="14">14 days from demo date</option>
-          <option value="30">30 days from demo date</option>
-          <option value="custom">Custom dates</option>
-        </select>
-      </div>
-      <div class="sa-field">
-        <label for="sa-from">From</label>
-        <input type="date" id="sa-from">
-      </div>
-      <div class="sa-field">
-        <label for="sa-to">To</label>
-        <input type="date" id="sa-to">
-      </div>
-      <div class="sa-field">
-        <label for="sa-day">Day for detailed analysis</label>
-        <select id="sa-day"></select>
-      </div>
-      <button type="button" class="link-btn sa-reset" id="sa-reset">Reset analysis</button>
+    <div class="perspective" role="group" aria-label="Choose a perspective">
+      <button type="button" class="persp-btn" data-persp="council" aria-pressed="true">
+        <span data-badge="council" data-size="44"></span>
+        <span><strong>Council view</strong><small>Collective insights across a council area</small></span>
+      </button>
+      <button type="button" class="persp-btn" data-persp="agency" aria-pressed="false">
+        <span data-badge="agency" data-size="44"></span>
+        <span><strong>Agency view</strong><small>Opportunities for one organisation</small></span>
+      </button>
     </div>
 
-    <div class="sa-scope" id="sa-scope"></div>
-    <div class="sa-summary" id="sa-summary" aria-live="polite"></div>
-
-    <div class="sa-grid">
-      <section class="panel sa-overlaps" aria-labelledby="sa-overlaps-title">
-        <div class="panel-head">
-          <h2 id="sa-overlaps-title">Where Activities Overlap</h2>
+    <section class="filter-bar" aria-label="Insight filters">
+      <div class="fb-row">
+        <div class="fb-field fb-agency" id="in-agency-field" hidden>
+          <label for="in-org">Organisation</label>
+          <select id="in-org"></select>
         </div>
-        <div class="sa-body" id="sa-overlaps"></div>
-      </section>
-
-      <section class="panel sa-map-panel" aria-labelledby="sa-map-title">
-        <div class="panel-head">
-          <h2 id="sa-map-title">Concentration of Recorded Activity</h2>
+        <div class="fb-field">
+          <label for="sa-council">Council</label>
+          <select id="sa-council"></select>
         </div>
-        <div class="sa-body sa-map-controls" id="sa-map-controls"></div>
-        <div id="sa-map" role="region" aria-label="Map of scheduled activity concentration"></div>
-        <p class="sa-note" id="sa-map-note"></p>
-      </section>
-    </div>
-
-    <section class="panel sa-collab" aria-labelledby="sa-collab-title">
-      <div class="panel-head">
-        <h2 id="sa-collab-title">Potential Collaboration Opportunities</h2>
+        <div class="fb-field">
+          <label for="sa-suburb">Suburb</label>
+          <select id="sa-suburb"></select>
+        </div>
+        <div class="fb-field">
+          <label for="sa-period">Reporting period</label>
+          <select id="sa-period">
+            <option value="14">14 days from demo date</option>
+            <option value="30">30 days from demo date</option>
+            <option value="custom">Custom dates</option>
+          </select>
+        </div>
+        <div class="fb-field fb-services">
+          <span class="fb-label" id="in-services-label">Service types</span>
+          <div id="in-services" aria-labelledby="in-services-label"></div>
+        </div>
+        <div class="fb-actions">
+          <button type="button" class="btn-outline" id="in-more" aria-expanded="false" aria-controls="in-more-panel">
+            <span data-icon="sliders"></span>More filters<span class="count-badge" id="in-more-count" hidden></span>
+          </button>
+          <button type="button" class="link-btn" id="sa-reset">Reset</button>
+        </div>
       </div>
-      <div class="sa-body" id="sa-collab"></div>
+      <div class="fb-row fb-row--sub">
+        <label class="switch">
+          <input type="checkbox" id="in-complement" checked>
+          <span class="switch-ui" aria-hidden="true"></span>
+          <span><strong>Include complementary service types</strong> <span class="hint-inline">in collaboration opportunities</span></span>
+        </label>
+        <div class="chip-row" id="in-chips" hidden></div>
+      </div>
+      <div class="more-panel" id="in-more-panel" hidden>
+        <div class="more-group more-group--row">
+          <div class="fb-field"><label for="sa-from">From</label><input type="date" id="sa-from"></div>
+          <div class="fb-field"><label for="sa-to">To</label><input type="date" id="sa-to"></div>
+          <p class="hint">Changing either date switches the reporting period to <em>Custom dates</em>.</p>
+        </div>
+      </div>
     </section>
 
-    <section class="panel sa-timeline-panel" aria-labelledby="sa-timeline-title">
-      <div class="panel-head">
-        <h2 id="sa-timeline-title">Daily Activity Timeline</h2>
-        <div class="sa-daynav">
-          <button type="button" class="btn-secondary" id="sa-prev-day" aria-label="Previous day">‹ Previous</button>
-          <button type="button" class="btn-secondary" id="sa-next-day" aria-label="Next day">Next ›</button>
-        </div>
-      </div>
-      <div class="sa-body" id="sa-timeline"></div>
+    <div class="scope-line" id="sa-scope"></div>
+    <div id="in-agency"></div>
+
+    <nav class="in-tabs" id="in-tabs" aria-label="Insight areas">
+      <button type="button" data-view="overview" aria-pressed="true"><span data-icon="insight" data-size="18"></span>Overview</button>
+      <button type="button" data-view="overlaps" aria-pressed="false"><span data-icon="layers" data-size="18"></span>Service overlaps</button>
+      <button type="button" data-view="collab" aria-pressed="false"><span data-icon="handshake" data-size="18"></span>Collaboration</button>
+      <button type="button" data-view="coverage" aria-pressed="false"><span data-icon="gap" data-size="18"></span>Coverage gaps</button>
+    </nav>
+
+    <section id="in-view-overview" class="in-view" aria-label="Overview">
+      <div class="insight-cards" id="in-cards"></div>
     </section>
 
-    <div class="sa-grid sa-grid--even">
-      <section class="panel" aria-labelledby="sa-gaps-title">
-        <div class="panel-head">
-          <h2 id="sa-gaps-title">Where Activity Is Not Recorded</h2>
+    <section id="in-view-overlaps" class="in-view" aria-labelledby="ov-title" hidden>
+      <div class="view-head">
+        <span data-badge="layers" data-size="44"></span>
+        <div><h2 id="ov-title">Service overlaps</h2><p>Similar services operating in the same area at the same time.</p></div>
+        <button type="button" class="btn-ghost back-btn" data-goto="overview"><span data-icon="arrowLeft" data-size="18"></span>Overview</button>
+      </div>
+      <div id="in-ov-recurring"></div>
+      <h3 class="adv-heading">Detailed analysis</h3>
+      <details class="adv" id="adv-summary">
+        <summary><span data-icon="info" data-size="18"></span>Detailed statistics</summary>
+        <div class="adv-body" id="sa-summary"></div>
+      </details>
+      <details class="adv" id="adv-overlaps">
+        <summary><span data-icon="layers" data-size="18"></span>Every overlap period: same suburb and council-wide</summary>
+        <div class="adv-body" id="sa-overlaps"></div>
+      </details>
+      <details class="adv" id="adv-timeline">
+        <summary><span data-icon="schedule" data-size="18"></span>Daily activity timeline</summary>
+        <div class="adv-body">
+          <div class="sa-daynav">
+            <label for="sa-day">Day</label><select id="sa-day"></select>
+            <button type="button" class="btn-outline" id="sa-prev-day" aria-label="Previous day"><span data-icon="chevronLeft" data-size="18"></span>Previous</button>
+            <button type="button" class="btn-outline" id="sa-next-day" aria-label="Next day">Next<span data-icon="chevronRight" data-size="18"></span></button>
+          </div>
+          <div id="sa-timeline"></div>
         </div>
-        <div class="sa-body" id="sa-gaps"></div>
-      </section>
+      </details>
+    </section>
 
-      <section class="panel" aria-labelledby="sa-catchment-title">
-        <div class="panel-head">
-          <h2 id="sa-catchment-title">Delivered Here and Service Areas</h2>
+    <section id="in-view-collab" class="in-view" aria-labelledby="co-title" hidden>
+      <div class="view-head">
+        <span data-badge="handshake" data-size="44" data-color="#23806A"></span>
+        <div><h2 id="co-title">Collaboration opportunities</h2><p>Who could work together, how, and where.</p></div>
+        <button type="button" class="btn-ghost back-btn" data-goto="overview"><span data-icon="arrowLeft" data-size="18"></span>Overview</button>
+      </div>
+      <div id="in-collab"></div>
+    </section>
+
+    <section id="in-view-coverage" class="in-view" aria-labelledby="cv-title" hidden>
+      <div class="view-head">
+        <span data-badge="gap" data-size="44" data-color="#475D75"></span>
+        <div><h2 id="cv-title">Recorded service gaps</h2><p>Categories, places and times with no or limited recorded activity.</p></div>
+        <button type="button" class="btn-ghost back-btn" data-goto="overview"><span data-icon="arrowLeft" data-size="18"></span>Overview</button>
+      </div>
+      <div id="in-coverage"></div>
+      <h3 class="adv-heading">Detailed analysis</h3>
+      <details class="adv" id="adv-map">
+        <summary><span data-icon="map" data-size="18"></span>Concentration of recorded activity (map)</summary>
+        <div class="adv-body">
+          <div class="sa-map-controls" id="sa-map-controls"></div>
+          <div id="sa-map" role="region" aria-label="Map of scheduled activity concentration"></div>
+          <p class="sa-note" id="sa-map-note"></p>
         </div>
-        <div class="sa-body" id="sa-catchment"></div>
-      </section>
+      </details>
+      <details class="adv" id="adv-gaps">
+        <summary><span data-icon="clock" data-size="18"></span>Where activity is not recorded, 8am to 8pm</summary>
+        <div class="adv-body" id="sa-gaps"></div>
+      </details>
+      <details class="adv" id="adv-catchment">
+        <summary><span data-icon="agency" data-size="18"></span>Organisations delivering here and wider service areas</summary>
+        <div class="adv-body" id="sa-catchment"></div>
+      </details>
+    </section>
+
+    <details class="adv method" id="in-method">
+      <summary><span data-icon="info" data-size="18"></span>Calculation methodology and data quality</summary>
+      <div class="adv-body" id="in-method-body"></div>
+    </details>
+  </main>
+
+  <!-- =================================================================== -->
+  <!-- REPORTS                                                              -->
+  <!-- =================================================================== -->
+  <main class="page" id="page-reports" aria-labelledby="rp-title" hidden>
+    <div class="page-head">
+      <span data-badge="report" data-size="52"></span>
+      <div>
+        <h1 id="rp-title">Reports</h1>
+        <p>Turn service insights into practical information for planning and collaboration.</p>
+      </div>
     </div>
-  </section>
 
-  <div class="scrim" id="scrim" hidden></div>
+    <div class="report-choice" role="group" aria-label="Choose a report type">
+      <button type="button" class="report-type" data-report="council" aria-pressed="true">
+        <span data-badge="councilReport" data-size="56"></span>
+        <span><strong>Council report</strong><span>Understand collective service delivery, collaboration opportunities and recorded coverage across your council area.</span></span>
+      </button>
+      <button type="button" class="report-type" data-report="agency" aria-pressed="false">
+        <span data-badge="agencyReport" data-size="56" data-color="#23806A"></span>
+        <span><strong>Agency report</strong><span>Discover collaboration opportunities relevant to your organisation and its services.</span></span>
+      </button>
+    </div>
+
+    <section class="filter-bar report-config" aria-label="Report settings">
+      <div class="fb-row">
+        <div class="fb-field fb-agency" id="rp-org-field" hidden>
+          <label for="rp-org">Organisation</label>
+          <select id="rp-org"></select>
+        </div>
+        <div class="fb-field">
+          <label for="rp-council">Council</label>
+          <select id="rp-council"></select>
+        </div>
+        <div class="fb-field">
+          <label for="rp-suburb">Suburb (optional)</label>
+          <select id="rp-suburb"></select>
+        </div>
+        <div class="fb-field">
+          <label for="rp-period">Reporting period</label>
+          <select id="rp-period">
+            <option value="14">14 days from demo date</option>
+            <option value="30">30 days from demo date</option>
+            <option value="custom">Custom dates</option>
+          </select>
+        </div>
+        <div class="fb-field" id="rp-dates" hidden>
+          <label for="rp-from">From</label>
+          <input type="date" id="rp-from">
+        </div>
+        <div class="fb-field" id="rp-dates-to" hidden>
+          <label for="rp-to">To</label>
+          <input type="date" id="rp-to">
+        </div>
+        <div class="fb-field fb-services">
+          <span class="fb-label" id="rp-services-label">Service types</span>
+          <div id="rp-services" aria-labelledby="rp-services-label"></div>
+        </div>
+      </div>
+      <div class="fb-row fb-row--sub">
+        <label class="switch">
+          <input type="checkbox" id="rp-complement" checked>
+          <span class="switch-ui" aria-hidden="true"></span>
+          <span><strong>Include complementary service types</strong> <span class="hint-inline">in collaboration opportunities</span></span>
+        </label>
+        <div class="chip-row" id="rp-chips" hidden></div>
+      </div>
+      <div class="report-actions">
+        <button type="button" class="btn btn-lg" id="rp-download"><span data-icon="download" data-size="20"></span>Download Word report (.docx)</button>
+        <p class="report-status" id="rp-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="report-preview-wrap" aria-labelledby="rp-preview-title">
+      <div class="report-preview-head">
+        <h2 id="rp-preview-title">Report preview</h2>
+        <p>The preview and the Word document are generated from the same calculations and update as you change the settings.</p>
+      </div>
+      <article class="report-preview" id="rp-preview"></article>
+    </section>
+  </main>
+
+  </div>
 
   <footer class="footer">
     <p>OnNow demonstration build · Fictional sample data only · Not for operational use.
@@ -285,7 +444,13 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="sample-data.js"></script>
-  <script src="app.js"></script>
+  <script src="shared.js"></script>
   <script src="analysis.js"></script>
+  <script src="app.js"></script>
+  <script src="insights.js"></script>
+  <script src="logo-data.js"></script>
+  <script src="docx.js"></script>
+  <script src="reports.js"></script>
+  <script>if (window.OnNow) { OnNow.initNavigation(); OnNow.showPage((location.hash || '#explore').slice(1)); }</script>
 </body>
 </html>
