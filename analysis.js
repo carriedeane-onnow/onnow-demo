@@ -4,7 +4,7 @@
  * Pure calculations on the fictional dataset. No page drawing happens here.
  *   - occurrences, overlap sweeps, peaks, concentration, daily gaps
  *   - similar-service overlaps and recorded category gaps
- *   - seven types of potential collaboration opportunity
+ *   - eight types of potential collaboration opportunity, using declared agency profiles
  * Everything is calculated from the records. Nothing is hardcoded.
  */
 (() => {
@@ -13,7 +13,7 @@
   const O = window.OnNow;
   if (!O) return;
   const { DATA, orgById, programById, siteById, councilOf, suburbsInCouncil, inCats, COUNCILS, SUBURB_COUNCIL,
-    fmtRange, fmtDay, weekdayOf, WEEKDAYS, WEEKDAY_PLURAL, plural, listText, category, CATEGORY_IDS } = O;
+    fmtRange, fmtDay, fmtDate, fmtMin, weekdayOf, WEEKDAYS, WEEKDAY_PLURAL, plural, listText, category, CATEGORY_IDS } = O;
   const { activities } = DATA;
 
   // Food relief and community meals are treated as "similar" food services.
@@ -383,22 +383,41 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Collaboration opportunities (seven types)                            */
+  /* Collaboration opportunities (eight types)                            */
   /* ------------------------------------------------------------------ */
 
   const NEAR_M = 500;       // illustrative "nearby" distance (straight line)
   const REFERRAL_M = 2500;  // illustrative distance for referral pathways
-  const BASIC = new Set(['food_relief', 'community_meals', 'showers_hygiene', 'laundry', 'clothing_assistance']);
-  const SUPPORT = new Set(['housing_homelessness', 'legal_assistance', 'mental_health', 'health_clinics', 'social_support', 'english_classes']);
+  const BASIC = new Set(['food_relief', 'community_meals', 'showers_hygiene', 'laundry', 'clothing_assistance', 'personal_care']);
+  const SUPPORT = new Set(['housing_homelessness', 'legal_assistance', 'mental_health', 'health_clinics', 'social_support', 'english_classes',
+    'financial_counselling', 'employment', 'dental', 'dfv_support', 'digital_access', 'aod_support', 'crisis_support', 'disability_ndis',
+    'carer_support', 'migrant_refugee', 'visa_immigration', 'family_support', 'education', 'life_skills', 'wellness']);
+  const GUEST_CATS = new Set(['financial_counselling', 'legal_assistance', 'employment', 'health_clinics', 'digital_access', 'housing_homelessness', 'mental_health', 'dental']);
+  const PATHWAY_CATS = new Set(['employment', 'education', 'digital_access', 'english_classes', 'life_skills']);
+
+  // Declared (fictional) collaboration profiles. Unknown values stay unknown.
+  const prof = (org) => O.profileOf(org);
+  const wantsCat = (org, cat) => prof(org).wants.categories.includes(cat);
+  const interested = (org, k) => prof(org).wants.interests.includes(k);
+  const servesSuburb = (org, sub) => ((orgById.get(org) || {}).areasServed || []).includes(sub);
+  const fmtKm = (m) => (m < 1000 ? `about ${Math.round(m / 10) * 10} m` : `about ${(m / 1000).toFixed(1)} km`);
+  function facilitiesText(org) {
+    const p = prof(org);
+    if (!p.hasProfile) return 'Not specified. Site suitability requires investigation.';
+    const yes = O.OFFER_FIELDS.filter((f) => p.offers[f.k] === true).map((f) => f.label.toLowerCase());
+    const unknown = O.OFFER_FIELDS.filter((f) => p.offers[f.k] === null).length;
+    return `${yes.length ? cap(listText(yes)) : 'No facilities declared'}${unknown ? ` (${unknown} item${unknown === 1 ? '' : 's'} not specified)` : ''}. Declared in a fictional demonstration profile.`;
+  }
 
   const TYPES = {
-    host:     { n: 1, icon: 'fixedSite', label: 'Fixed site hosting a mobile service', short: 'Host a mobile service' },
-    mobile:   { n: 2, icon: 'van',       label: 'Mobile services operating together', short: 'Mobile services together' },
-    hub:      { n: 3, icon: 'hub',       label: 'Multi-agency service hub', short: 'Multi-agency hub' },
-    hours:    { n: 4, icon: 'schedule',  label: 'Coordinating operating hours', short: 'Coordinate hours' },
-    geo:      { n: 5, icon: 'map',       label: 'Coordinating geographic coverage', short: 'Coordinate coverage' },
-    visiting: { n: 6, icon: 'agency',    label: 'Fixed organisation hosting a visiting provider', short: 'Visiting provider' },
-    referral: { n: 7, icon: 'referral',  label: 'Coordinated referral pathways', short: 'Referral pathways' }
+    host:     { n: 1, icon: 'fixedSite', label: 'Fixed site hosting a mobile service', short: 'Host a mobile service', friendly: 'Bring a mobile service to a site', color: '#00C1DE' },
+    mobile:   { n: 2, icon: 'van',       label: 'Mobile services operating together', short: 'Mobile services together', friendly: 'Share a mobile stop', color: '#E65300' },
+    hub:      { n: 3, icon: 'hub',       label: 'Multi-agency service hub', short: 'Multi-agency hub', friendly: 'Community hub', color: '#3BD4AE' },
+    hours:    { n: 4, icon: 'schedule',  label: 'Coordinating operating hours', short: 'Coordinate hours', friendly: 'Coordinate operating hours', color: '#FFCD00' },
+    geo:      { n: 5, icon: 'map',       label: 'Coordinating geographic coverage', short: 'Coordinate coverage', friendly: 'Coordinate where services go', color: '#DE8ABA' },
+    visiting: { n: 6, icon: 'inbound',   label: 'Fixed organisation hosting a visiting provider', short: 'Visiting provider', friendly: 'Visiting specialist service', color: '#00A1E2' },
+    referral: { n: 7, icon: 'referral',  label: 'Coordinated referral pathways', short: 'Referral pathways', friendly: 'Referral partnership', color: '#F4436C' },
+    program:  { n: 8, icon: 'program',   label: 'Collaborating on programs', short: 'Program collaboration', friendly: 'Program collaboration', color: '#000F9F' }
   };
   const STATUSES = {
     existing: { label: 'Existing complementary delivery', help: 'Different organisations are recorded delivering complementary services at the same location and time. This does not establish a formal partnership.' },
@@ -427,7 +446,8 @@
     hours: ['demand', 'funding', 'staffing', 'interest'],
     geo: ['demand', 'route', 'funding', 'vehicle'],
     visiting: ['outreach', 'interest', 'site', 'privacy', 'eligibility', 'funding'],
-    referral: ['interest', 'eligibility', 'consent', 'staffing']
+    referral: ['interest', 'eligibility', 'consent', 'staffing'],
+    program: ['interest', 'staffing', 'eligibility', 'site', 'funding']
   };
   const NEXT_ACTION = {
     host: 'Arrange an introductory conversation between the host and the mobile provider about whether a visit is practical.',
@@ -436,7 +456,8 @@
     hours: 'Share current timetables and discuss whether coordinating or staggering hours could extend collective coverage.',
     geo: 'Discuss route coordination using current stop locations and any information about community demand.',
     visiting: 'Ask the provider whether it offers outreach, and whether the host site could accommodate a visiting session.',
-    referral: 'Exchange service information and contact points, and discuss a simple referral process.'
+    referral: 'Exchange service information and contact points, and discuss a simple referral process.',
+    program: 'Share course outlines and dates, and discuss whether a guest session, a coordinated start date or a referral after the course would help participants.'
   };
 
   function stopKey(a) { return a.siteId || `${a.location.latitude.toFixed(4)},${a.location.longitude.toFixed(4)}`; }
@@ -477,7 +498,15 @@
     const progs = programsOf(segs);
     const allProgs = programsOf(allSegs);
     const mobile = [...progs.values()].filter((p) => p.mode === 'mobile');
-    const hostedSites = (DATA.sites || []).filter((s) => s.siteType === 'fixed' && s.hostOrganisationId && s.lga === opt.council);
+    // Established community sites: the host runs a drop-in essentials service there, or declares
+    // regular community attendance. Offices and appointment-only premises are not assumed to be hub hosts.
+    const communitySite = (s) => {
+      const hostCats = segs.filter((x) => x.a.siteId === s.siteId && x.a.organisationId === s.hostOrganisationId).map((x) => x.a.category);
+      return hostCats.some((c) => BASIC.has(c)) || !!prof(s.hostOrganisationId).offers.attendance;
+    };
+    const hostedSites = (DATA.sites || []).filter((s) => s.siteType === 'fixed' && s.hostOrganisationId && s.lga === opt.council
+      && (communitySite(s) || interested(s.hostOrganisationId, 'visiting')));
+    const communityIds = new Set(hostedSites.filter(communitySite).map((s) => s.siteId));
     const out = [];
     const add = (o) => {
       o.typeInfo = TYPES[o.type];
@@ -487,19 +516,25 @@
       o.orgIds = uniq(o.orgIds);
       o.categories = uniq(o.categories);
       o.suburbs = uniq(o.suburbs);
+      o.declared = uniq(o.declared || []);
+      o.when = o.when || o.window;
       out.push(o);
     };
 
     /* 1. Fixed site hosting a mobile service */
-    hostedSites.forEach((site) => {
+    hostedSites.filter((s) => communityIds.has(s.siteId)).forEach((site) => {
       const atSite = segs.filter((s) => s.a.siteId === site.siteId);
       const hostSegs = atSite.filter((s) => s.a.organisationId === site.hostOrganisationId);
       if (!hostSegs.length) return;
       const hostProgs = siteServices(hostSegs, progs);
       const hostGroups = new Set(hostProgs.map((p) => p.group));
       const siteGroups = new Set(atSite.map((s) => groupOf(s.a.category)));
+      const seenPair = new Set();
       mobile.forEach((P) => {
         if (P.org === site.hostOrganisationId || hostGroups.has(P.group)) return;
+        // One suggestion per provider and kind of service at each site.
+        if (seenPair.has(`${P.org}|${P.group}`)) return;
+        seenPair.add(`${P.org}|${P.group}`);
         const visits = P.segs.filter((s) => s.a.siteId === site.siteId);
         const base = {
           type: 'host', location: `${site.siteName}, ${site.suburb}`, siteId: site.siteId,
@@ -519,6 +554,7 @@
             title: `${P.name} already visits ${site.siteName}`,
             summary: `${orgName(P.org)} is recorded at ${site.siteName} while ${orgName(site.hostOrganisationId)} runs ${serviceList(hostDuring)}.`,
             window: `${patternText(visits, P.id)}, overlapping ${listText(hostDuring.map((p) => p.name))}`,
+            when: patternText(visits, P.id),
             benefit: `People could reach ${category(P.cat).label.toLowerCase()} and ${serviceList(hostDuring)} in one visit.`,
             why: 'Both organisations are recorded at the same site with overlapping operating hours. Shared delivery does not by itself establish a formal partnership.',
             facts: [
@@ -535,28 +571,46 @@
         }
         if (siteGroups.has(P.group)) return; // another visitor already offers this at the site
         const near = P.segs.filter((s) => distanceM(s.a.location, site.location) <= NEAR_M);
-        if (!near.length) return;
-        const dist = Math.round(Math.min(...near.map((s) => distanceM(s.a.location, site.location))));
-        const nearDays = uniq(near.map((s) => weekdayOf(s.date)));
+        // Declared interest: the host wants this service and the provider lists the host suburb.
+        const declared = wantsCat(site.hostOrganisationId, P.cat) && servesSuburb(P.org, site.suburb);
+        if (!near.length && !declared) return;
+        const ref = near.length ? near : P.segs;
+        const distM = Math.min(...ref.map((s) => distanceM(s.a.location, site.location)));
+        const dist = Math.round(distM);
+        const nearDays = uniq(ref.map((s) => weekdayOf(s.date)));
         const hostSameDays = hostSegs.filter((h) => nearDays.includes(weekdayOf(h.date)));
         const hostOnDays = siteServices(hostSameDays, progs);
+        const hp = prof(site.hostOrganisationId);
+        const vanOK = hp.offers.vehicleAccess === true || hp.offers.outdoorSpace === true;
+        const vanNo = hp.offers.vehicleAccess === false && hp.offers.outdoorSpace === false;
         const windowText = hostOnDays.length
-          ? `When ${orgName(P.org)} stops nearby (${patternText(near, P.id)}), ${site.siteName} records ${hostOnDays.map((p) => `${p.name} ${patternText(hostSameDays.filter((h) => (h.a.programId || h.a.activityId) === p.id), p.id).replace(/^[A-Za-z–, ]+?, (?=\d)/, '')}`).join('; ')}. This is a recorded operating window, not an available hosting slot.`
-          : `${orgName(P.org)} stops nearby ${patternText(near, P.id)}. ${site.siteName} records no sessions on those days.`;
+          ? `When ${orgName(P.org)} operates (${patternText(ref, P.id)}), ${site.siteName} records ${hostOnDays.map((p) => `${p.name} ${patternText(hostSameDays.filter((h) => (h.a.programId || h.a.activityId) === p.id), p.id).replace(/^[A-Za-z–, ]+?, (?=\d)/, '')}`).join('; ')}. This is a recorded operating window, not an available hosting slot.`
+          : `${orgName(P.org)} currently operates ${patternText(ref, P.id)}. ${site.siteName} records no sessions on those days.`;
+        const declaredNotes = [
+          declared ? `${orgName(site.hostOrganisationId)} would like to connect with ${category(P.cat).label.toLowerCase()} (declared)` : '',
+          interested(P.org, 'hosts') ? `${orgName(P.org)} is looking for host sites (declared)` : ''
+        ].filter(Boolean);
         add(Object.assign(base, {
-          id: `host|${site.siteId}|${P.id}`, status: 'potential', suburbs: [site.suburb, ...near.map((s) => s.a.suburb)],
+          id: `host|${site.siteId}|${P.id}`, status: vanNo ? 'investigate' : 'potential', suburbs: [site.suburb, ...ref.map((s) => s.a.suburb)],
           title: `${site.siteName} could host ${P.name}`,
-          summary: `${orgName(P.org)} already stops about ${dist} m away. ${site.siteName} does not record ${category(P.cat).label.toLowerCase()}.`,
+          summary: `${orgName(P.org)} already stops ${fmtKm(dist)} away${declared && !near.length ? ' and lists ' + site.suburb + ' in its service area' : ''}. ${site.siteName} does not record ${category(P.cat).label.toLowerCase()}.`,
           window: windowText,
+          when: hp.offers.hostingTimes ? `${hp.offers.hostingTimes} (declared hosting times)` : `${WEEKDAY_PLURAL[nearDays[0]] || 'Day to be discussed'}: when ${orgName(P.org)} is already in the area`,
           benefit: `People attending ${serviceList(hostProgs)} could also access ${category(P.cat).label.toLowerCase()} in the same visit.`,
-          why: `A mobile ${category(P.cat).label.toLowerCase()} service stops within ${NEAR_M} m (straight line) of a fixed site that does not record that service. No visit to the site is recorded.`,
+          why: near.length
+            ? `A mobile ${category(P.cat).label.toLowerCase()} service stops within ${NEAR_M} m (straight line) of a fixed site that does not record that service.${declared ? ' The host has also declared an interest in this service.' : ''} No visit to the site is recorded.`
+            : `The host has declared an interest in ${category(P.cat).label.toLowerCase()}, and this mobile provider lists ${site.suburb} in its service area. Distance alone was not the reason for this match.`,
+          declared: declaredNotes,
           facts: [
             ['Potential host organisation', orgName(site.hostOrganisationId)],
             ['Fixed site', `${site.siteName}, ${site.suburb}`],
             ['Existing services at the site', hostProgs.map((p) => `${p.name} (${p.pattern})`).join('; ')],
+            ['Site facilities', facilitiesText(site.hostOrganisationId)],
+            ['Space for a service van', vanOK ? 'Declared' : vanNo ? 'Not available (declared). Requires investigation.' : 'Not specified. Requires investigation.'],
             ['Relevant mobile provider', orgName(P.org)],
             ['Service offered', `${P.name} (${category(P.cat).label})`],
-            ['Current nearby stop', `${uniq(near.map((s) => stopName(s.a))).join('; ')}, about ${dist} m away (${patternText(near, P.id)})`],
+            ['Current nearest stop', `${uniq(ref.filter((s) => Math.round(distanceM(s.a.location, site.location)) === dist).map((s) => stopName(s.a))).join('; ')}, ${fmtKm(dist)} away (${patternText(ref, P.id)})`],
+            ['Declared interests', declaredNotes.join('; ') || 'None recorded'],
             ['Potential shared delivery window', windowText]
           ]
         }));
@@ -626,6 +680,10 @@
           window: existing
             ? `${commonRange(x.concurrent.map((c) => [Math.max(c.x.start, c.y.start), Math.min(c.x.end, c.y.end)]))} on ${WEEKDAY_PLURAL[weekdayOf(concDates[0])]} (${plural(concDates.length, 'date')})`
             : ordered.map((m) => `${m.Q.name}: ${m.qs.pattern}${m.same ? '' : ` (about ${m.d} m away)`}`).join('; '),
+          when: existing
+            ? `${WEEKDAY_PLURAL[weekdayOf(concDates[0])]}, ${commonRange(x.concurrent.map((c) => [Math.max(c.x.start, c.y.start), Math.min(c.x.end, c.y.end)]))}`
+            : `Current days: ${listText(uniq(ordered.map((m) => WEEKDAY_PLURAL[weekdayOf(m.qs.segs[0].date)])))}`,
+          siteId: x.st.siteId,
           benefit: `People could access ${listText(uniq(x.members.map((m) => category(m.Q.cat).label.toLowerCase())))} at one stop.`,
           why: existing
             ? 'Complementary mobile services are recorded at the same stop at overlapping times. This does not establish a formal partnership.'
@@ -654,11 +712,12 @@
         return {
           key, a, site, members,
           name: stopName(a),
-          hosted: !!(site && site.siteType === 'fixed' && site.hostOrganisationId),
+          office: !!(site && site.siteType === 'fixed' && site.hostOrganisationId && !communityIds.has(site.siteId)),
+          hosted: !!(site && communityIds.has(site.siteId)),
           orgs: uniq(members.map((m) => m.P.org)),
           groups: uniq(members.map((m) => m.P.group))
         };
-      }).filter((x) => x.orgs.length >= 3 && x.groups.length >= 3);
+      }).filter((x) => !x.office && x.orgs.length >= 3 && x.groups.length >= 3);
       // Community sites run by a host organisation come first, then the largest groups.
       anchors.sort((x, y) => (Number(y.hosted) - Number(x.hosted)) || (y.orgs.length - x.orgs.length) || (y.members.length - x.members.length));
       const chosen = [];
@@ -683,24 +742,39 @@
         }));
         const bestDay = [...dayOrgs.entries()].sort((p, q) => (q[1].size - p[1].size) || (WEEKDAYS.indexOf(p[0]) - WEEKDAYS.indexOf(q[0])))[0];
         const atSite = nodes.filter((n) => n.at);
+        // Similar providers need a distinct contribution; this is not assumed.
+        const byGroup = groupBy(nodes.flatMap((n) => n.cats.map((c) => ({ g: groupOf(c), org: n.org }))), (r) => r.g);
+        const similar = [...byGroup.entries()].map(([g, rs]) => [g, uniq(rs.map((r) => r.org))]).filter(([, os]) => os.length > 1);
+        const host = x.hosted ? x.site.hostOrganisationId : null;
+        const hostDeclared = host && (interested(host, 'hub') || interested(host, 'visiting'));
+        // A clinic van, car park or other recorded delivery point is never treated as a confirmed hub host.
+        const place = x.hosted ? `${x.name}, ${x.a.suburb}` : `A location in ${x.a.suburb} to be identified`;
         add({
-          id: `hub|${x.key}`, type: 'hub', status: 'potential',
-          title: `${x.orgs.length} organisations could investigate a shared community support day ${x.hosted ? 'at' : 'near'} ${x.name}`,
-          summary: `${cap(listText(uniq(nodes.flatMap((n) => n.cats)).map((c) => category(c).label.toLowerCase())))} are all delivered at or within ${NEAR_M} m of ${x.name}.`,
-          location: `${x.name}, ${x.a.suburb}`,
+          id: `hub|${x.key}`, type: 'hub', status: x.hosted ? 'potential' : 'investigate',
+          title: x.hosted
+            ? `${x.name} could host a regular community hub with ${x.orgs.length - (x.orgs.includes(host) ? 1 : 0)} partner organisations`
+            : `${x.orgs.length} organisations could investigate a shared community support day in ${x.a.suburb}`,
+          summary: `${cap(listText(uniq(nodes.flatMap((n) => n.cats)).map((c) => category(c).label.toLowerCase())))} are all delivered at or within ${NEAR_M} m of ${x.hosted ? x.name : `a recorded delivery point (${x.name})`}.`,
+          location: place,
+          proposedLocation: !x.hosted,
+          siteId: x.hosted ? x.site.siteId : null,
           window: bestDay ? `${WEEKDAY_PLURAL[bestDay[0]]}: ${bestDay[1].size} of these ${x.orgs.length} organisations already operate at or near this location.` : '',
-          benefit: 'People could access several essential services in one place, and organisations could share information about each other\'s services.',
-          why: `${x.orgs.length} distinct organisations deliver ${x.groups.length} different kinds of service within ${NEAR_M} m (straight line) of one location. ${atSite.length >= 2 ? `${atSite.length} already deliver at this location itself.` : 'Most deliver nearby rather than at this location.'}`,
+          when: bestDay ? `${WEEKDAY_PLURAL[bestDay[0]]}: ${bestDay[1].size} of ${x.orgs.length} already operate nearby` : 'Day to be discussed',
+          benefit: 'People could access several services in one place, regularly, and organisations could share information about each other\'s services.',
+          why: `${x.orgs.length} distinct organisations deliver ${x.groups.length} different kinds of service within ${NEAR_M} m (straight line) of one location. ${atSite.length >= 2 ? `${atSite.length} already deliver at this location itself.` : 'Most deliver nearby rather than at this location.'}${x.hosted ? (hostDeclared ? ' The host has declared an interest in hub or visiting partnerships.' : '') : ' No community host is recorded at this point, so a suitable location requires investigation.'}`,
+          declared: hostDeclared ? [`${orgName(host)} is interested in community hub partnerships (declared)`] : [],
           orgIds: x.orgs, categories: nodes.flatMap((n) => n.cats), suburbs: [x.a.suburb, ...x.members.flatMap((m) => m.near.map((s) => s.a.suburb))],
-          hub: { name: x.name, hosted: x.hosted, host: x.site && x.site.hostOrganisationId },
-          parties: nodes.map((n) => ({ org: n.org, role: n.at ? 'Already delivers at this location' : `Delivers about ${n.d} m away`, mode: n.mode, programs: n.programs })),
+          hub: { name: x.name, hosted: x.hosted, host },
+          parties: nodes.map((n) => ({ org: n.org, role: n.org === host ? 'Host organisation' : n.at ? 'Already delivers at this location' : `Delivers about ${n.d} m away`, mode: n.mode, programs: n.programs })),
           facts: [
-            ['Shared location', `${x.name}, ${x.a.suburb}${x.hosted ? ` (operated by ${orgName(x.site.hostOrganisationId)})` : ''}`],
+            [x.hosted ? 'Proposed host' : 'Proposed location', x.hosted ? `${x.name}, ${x.a.suburb} (operated by ${orgName(host)})` : `To be identified in ${x.a.suburb}. The nearest recorded delivery point is "${x.name}", which is not a confirmed community host.`],
+            ['Host facilities', x.hosted ? facilitiesText(host) : 'Unknown. Requires investigation.'],
             ['Already delivering at this location', atSite.length ? atSite.map((n) => orgName(n.org)).join('; ') : 'None recorded'],
             ['Delivering nearby', nodes.filter((n) => !n.at).map((n) => `${orgName(n.org)} (about ${n.d} m)`).join('; ') || 'None'],
-            ['Compatible operating pattern', bestDay ? `${WEEKDAY_PLURAL[bestDay[0]]}: ${listText([...bestDay[1]].map(orgName))}` : 'No shared weekday recorded']
+            ['Compatible operating pattern', bestDay ? `${WEEKDAY_PLURAL[bestDay[0]]}: ${listText([...bestDay[1]].map(orgName))}` : 'No shared weekday recorded'],
+            ['Similar providers', similar.length ? `${similar.map(([g, os]) => `${groupLabel(g)}: ${listText(os.map(orgName))}`).join('; ')}. Each would need a distinct contribution (for example different days, items or client groups). This is not assumed.` : 'None: each organisation offers a different kind of service']
           ],
-          graphic: { kind: 'hub', center: x.name, nodes: nodes.map((n) => ({ org: n.org, cat: n.cats[0], mode: n.mode, at: n.at })) }
+          graphic: { kind: 'hub', center: x.hosted ? x.name : `${x.a.suburb} (location to be identified)`, proposed: !x.hosted, nodes: nodes.filter((n) => n.org !== host).map((n) => ({ org: n.org, cat: n.cats[0], mode: n.mode, at: n.at })) }
         });
       });
     }
@@ -732,6 +806,7 @@
           summary: `${plural(orgIds.length, 'organisation')} run similar services at the same time, mostly ${entries[0].window}.${later.length ? ` Fewer are recorded later in the day.` : ''}`,
           location: suburb,
           window: entries.map((e) => `${listText(e.progIds.map((id) => (progs.get(id) || {}).name || id))}: ${e.window} on ${plural(e.dates.size, 'date')}`).join('; '),
+          when: `Recorded overlap ${entries[0].window}, ${listText(WEEKDAYS.filter((d) => dates.some((x) => weekdayOf(x) === d)).map((d) => WEEKDAY_PLURAL[d]))}`,
           benefit: 'Coordinating or staggering hours could extend the times when people can access a similar service.',
           why: `Similar services run by different organisations are scheduled at overlapping times in ${suburb} on ${plural(dates.length, 'date')} in this period. This is not evidence of duplication.`,
           orgIds, categories: P.map((p) => p.cat), suburbs: [suburb],
@@ -771,6 +846,7 @@
           summary: `${plural(orgs.length, 'mobile provider')} stop in the same suburbs, while ${plural(low.length, 'suburb')} record${low.length === 1 ? 's' : ''} no ${groupLabel(group).toLowerCase()} in this period.`,
           location: listText(conc.map((c) => c.suburb)),
           window: conc.map((c) => `${c.suburb}: ${c.stops.map((st) => `${st.program.name} (${st.pattern})`).join('; ')}`).join(' | '),
+          when: 'When routes are next reviewed',
           benefit: 'Coordinating routes could help mobile services reach more locations without duplicating stops.',
           why: `Several mobile providers of similar services stop in the same suburbs, while other suburbs in the council record none. Fewer recorded services does not show greater unmet demand.`,
           orgIds: orgs, categories: ms.map((p) => p.cat), suburbs: conc.map((c) => c.suburb).concat(low),
@@ -795,43 +871,68 @@
       const siteGroups = new Set(atSite.map((s) => groupOf(s.a.category)));
       const hostProgs = siteServices(atSite.filter((s) => s.a.organisationId === site.hostOrganisationId), progs);
       const councilCats = new Set(segs.map((s) => s.a.category));
-      SUPPORT.forEach((cat) => {
-        if (siteGroups.has(groupOf(cat))) return;
-        const candidates = [...allProgs.values()].filter((P) => P.cat === cat && P.mode !== 'mobile' && P.org !== site.hostOrganisationId);
-        const byOrg = groupBy(candidates, (P) => P.org);
-        const ranked = [...byOrg.entries()].map(([org, ps]) => {
-          const o = orgById.get(org) || {};
-          const servesSuburb = (o.areasServed || []).includes(site.suburb);
-          const inCouncil = ps.some((P) => P.segs.some((s) => councilOf(s.a) === opt.council));
-          const d = Math.round(Math.min(...ps.flatMap((P) => P.stops.map((st) => distanceM(st.loc, site.location)))));
-          return { org, ps, servesSuburb, inCouncil, d };
-        }).filter((r) => r.servesSuburb) // the provider's recorded service area includes the host suburb
-          .sort((x, y) => (Number(y.servesSuburb) - Number(x.servesSuburb)) || (x.d - y.d)).slice(0, 2);
+      const host = site.hostOrganisationId;
+      const hp = prof(host);
+      // Requested services first, then services with a provider that declares visiting capability.
+      // At most three visiting suggestions per site, so a site is not flooded with possibilities.
+      const CORE = ['housing_homelessness', 'legal_assistance', 'mental_health', 'health_clinics', 'social_support', 'english_classes'];
+      const capable = (cat) => (DATA.programs || []).some((p) => p.category === cat && p.deliveryMode !== 'mobile' && p.organisationId !== host
+        && servesSuburb(p.organisationId, site.suburb) && prof(p.organisationId).offers.visitingSpecialist === true);
+      const order = [...SUPPORT].filter((cat) => wantsCat(host, cat) || capable(cat) || (!hp.hasProfile && CORE.includes(cat)))
+        .sort((x, y) => (Number(wantsCat(host, y)) - Number(wantsCat(host, x))) || (Number(capable(y)) - Number(capable(x))));
+      let made = 0;
+      order.forEach((cat) => {
+        if (made >= 3 || siteGroups.has(groupOf(cat))) return;
+        // Candidates include programs with no public schedule (for example appointment-only specialist services).
+        const candidates = (DATA.programs || []).filter((p) => p.category === cat && p.deliveryMode !== 'mobile' && p.organisationId !== host);
+        const byOrg = groupBy(candidates, (p) => p.organisationId);
+        const ranked = [...byOrg.entries()].map(([org, plist]) => {
+          const ps = plist.map((p) => allProgs.get(p.programId) || { id: p.programId, name: p.programName, org, cat, mode: 'fixed', segs: [], stops: [], pattern: p.scheduleText || 'No public schedule recorded', statuses: [] });
+          const stops = ps.flatMap((P) => P.stops);
+          const d = stops.length ? Math.round(Math.min(...stops.map((st) => distanceM(st.loc, site.location)))) : null;
+          const visitCap = prof(org).offers.visitingSpecialist;
+          return { org, ps, serves: servesSuburb(org, site.suburb), d, visitCap, declaredHost: wantsCat(host, cat), declaredProv: interested(org, 'hosts') };
+        }).filter((r) => r.serves) // the provider's recorded service area includes the host suburb
+          .sort((x, y) => (Number(y.visitCap === true) - Number(x.visitCap === true)) || (Number(y.declaredHost) - Number(x.declaredHost)) || ((x.d == null ? 1e9 : x.d) - (y.d == null ? 1e9 : y.d))).slice(0, 2);
         if (!ranked.length) return;
+        made += 1;
         const lead = ranked[0];
         const gapHere = !councilCats.has(cat);
+        const hostWelcomes = lead.declaredHost || interested(host, 'visiting');
+        const status = lead.visitCap === true && hostWelcomes ? 'potential' : 'investigate';
+        const declaredNotes = [
+          lead.declaredHost ? `${orgName(host)} would like to connect with ${category(cat).label.toLowerCase()} (declared)` : (interested(host, 'visiting') ? `${orgName(host)} welcomes visiting providers (declared)` : ''),
+          lead.visitCap === true ? `${orgName(lead.org)} can deliver visiting specialist sessions (declared)` : '',
+          lead.declaredProv ? `${orgName(lead.org)} is looking for host sites (declared)` : ''
+        ].filter(Boolean);
+        const from = lead.ps.find((P) => P.stops.length);
         add({
-          id: `visiting|${site.siteId}|${cat}`, type: 'visiting', status: 'investigate',
-          title: `${orgName(lead.org)} could investigate a visiting ${category(cat).label.toLowerCase()} session at ${site.siteName}`,
+          id: `visiting|${site.siteId}|${cat}`, type: 'visiting', status, siteId: site.siteId,
+          title: `${orgName(lead.org)} could ${status === 'potential' ? 'explore' : 'investigate'} a visiting ${category(cat).label.toLowerCase()} session at ${site.siteName}`,
           summary: `${site.siteName} records ${serviceList(hostProgs)} but no ${category(cat).label.toLowerCase()}.${gapHere ? ` No ${category(cat).label.toLowerCase()} sessions are recorded anywhere in ${COUNCILS[opt.council].name} in this period.` : ''}`,
           location: `${site.siteName}, ${site.suburb}`,
           window: `${site.siteName} currently records: ${hostProgs.map((p) => `${p.name} (${p.pattern})`).join('; ')}. A recorded operating window is not an available slot.`,
-          benefit: `People already visiting ${site.siteName} could access ${category(cat).label.toLowerCase()} without travelling to ${lead.ps[0].stops[0].suburb}.`,
-          why: `${orgName(lead.org)} delivers ${category(cat).label.toLowerCase()} at a fixed location${lead.servesSuburb ? ` and lists ${site.suburb} in its service area` : ` in ${COUNCILS[opt.council].name}`}. Whether it offers outreach is not recorded.`,
-          orgIds: [site.hostOrganisationId, ...ranked.map((r) => r.org)], categories: [cat, ...hostProgs.map((p) => p.cat)], suburbs: [site.suburb],
+          when: hp.offers.hostingTimes ? `${hp.offers.hostingTimes} (declared hosting times)` : `Alongside ${hostProgs[0] ? hostProgs[0].name : 'existing services'} (${hostProgs[0] ? hostProgs[0].pattern : 'times not recorded'})`,
+          benefit: `People already visiting ${site.siteName} could access ${category(cat).label.toLowerCase()} without ${from ? `travelling to ${from.stops[0].suburb}` : 'a separate appointment elsewhere'}.`,
+          why: `${orgName(lead.org)} delivers ${category(cat).label.toLowerCase()} and lists ${site.suburb} in its service area. ${lead.visitCap === true ? 'It has declared that it can deliver visiting specialist sessions.' : 'Whether it offers outreach is not recorded.'}${hostWelcomes ? ' The host has declared an interest.' : ''}`,
+          declared: declaredNotes,
+          orgIds: [host, ...ranked.map((r) => r.org)], categories: [cat, ...hostProgs.map((p) => p.cat)], suburbs: [site.suburb],
           gapHere,
           parties: [
-            { org: site.hostOrganisationId, role: 'Potential host site', mode: 'fixed', programs: hostProgs.map(progBrief) },
-            ...ranked.map((r) => ({ org: r.org, role: `Potential visiting provider (about ${(r.d / 1000).toFixed(1)} km away)`, mode: 'fixed', programs: r.ps.map(progBrief) }))
+            { org: host, role: 'Potential host site', mode: 'fixed', programs: hostProgs.map(progBrief) },
+            ...ranked.map((r) => ({ org: r.org, role: `Potential visiting provider${r.d != null ? ` (${fmtKm(r.d)} away)` : ' (location not published)'}`, mode: 'fixed', programs: r.ps.map(progBrief) }))
           ],
           facts: [
-            ['Potential host site', `${site.siteName}, ${site.suburb} (${orgName(site.hostOrganisationId)})`],
+            ['Potential host site', `${site.siteName}, ${site.suburb} (${orgName(host)})`],
             ['Existing services at the site', hostProgs.map((p) => `${p.name} (${p.pattern})`).join('; ')],
-            ['Possible visiting providers', ranked.map((r) => `${orgName(r.org)}: ${r.ps.map((P) => `${P.name}, ${P.stops.map((s) => s.suburb).join(', ')} (${P.pattern})`).join('; ')}`).join(' | ')],
-            ['Service area', ranked.map((r) => `${orgName(r.org)} ${r.servesSuburb ? `lists ${site.suburb}` : `does not list ${site.suburb}`}`).join('; ')],
-            ['Outreach capability', 'Not recorded. Requires investigation.']
+            ['Site facilities', facilitiesText(host)],
+            ['Private room', hp.offers.privateRoom === true ? 'Declared' : hp.offers.privateRoom === false ? 'Not available (declared)' : 'Not specified. Requires investigation.'],
+            ['Possible visiting providers', ranked.map((r) => `${orgName(r.org)}: ${r.ps.map((P) => `${P.name}${P.stops.length ? `, ${uniq(P.stops.map((s) => s.suburb)).join(', ')}` : ''} (${P.pattern})`).join('; ')}`).join(' | ')],
+            ['Service area', ranked.map((r) => `${orgName(r.org)} lists ${site.suburb}`).join('; ')],
+            ['Outreach capability', ranked.map((r) => `${orgName(r.org)}: ${r.visitCap === true ? 'visiting sessions declared' : r.visitCap === false ? 'does not offer visiting sessions (declared)' : 'not specified, requires investigation'}`).join('; ')],
+            ['Declared interests', declaredNotes.join('; ') || 'None recorded']
           ],
-          graphic: { kind: 'pair', a: { cat: hostProgs[0] ? hostProgs[0].cat : cat, org: site.hostOrganisationId, mode: 'fixed' }, b: { cat, org: lead.org, mode: 'fixed' } }
+          graphic: { kind: 'pair', a: { cat: hostProgs[0] ? hostProgs[0].cat : cat, org: host, mode: 'fixed' }, b: { cat, org: lead.org, mode: 'fixed' } }
         });
       });
     });
@@ -860,6 +961,8 @@
           summary: `${cap(listText(list2.map((p) => category(p.Q.cat).label.toLowerCase())))} operate within ${(REFERRAL_M / 1000).toFixed(1)} km of where ${orgName(org)} delivers ${serviceList(ps)}.`,
           location: uniq(locs.map((l) => `${l.name}, ${l.suburb}`)).slice(0, 3).join('; '),
           window: `${orgName(org)}: ${ps.map((P) => `${P.name} (${P.pattern})`).join('; ')}`,
+          when: `Ongoing, during ${orgName(org)}'s existing sessions`,
+          declared: interested(org, 'referral') ? [`${orgName(org)} is interested in referral partnerships (declared)`] : [],
           benefit: 'People seeking basic support could be connected more easily with housing, legal, health or wellbeing help.',
           why: `Complementary support services operate within ${(REFERRAL_M / 1000).toFixed(1)} km (straight line, illustrative) during this period. No formal referral relationship is recorded.`,
           orgIds: [org, ...list2.map((p) => p.Q.org)], categories: [...ps.map((P) => P.cat), ...list2.map((p) => p.Q.cat)],
@@ -878,6 +981,126 @@
       });
     }
 
+    /* 8. Collaborating on programs (courses, workshops and intakes)
+     *    One program and one intake, however many sessions it has. */
+    {
+      const courses = [...progs.values()].filter((P) => (programById.get(P.id) || {}).programType === 'fixed_term');
+      const intakeOf = (p) => (p.intakes || []).find((it) => it.commencementDate <= opt.to && it.completionDate >= opt.from) || (p.intakes || [])[0];
+      courses.forEach((P) => {
+        const p = programById.get(P.id);
+        const it = intakeOf(p);
+        const st = P.stops[0];
+        const site = siteById.get(st.siteId);
+        const days = it ? `${fmtDate(it.commencementDate)} to ${fmtDate(it.completionDate)}` : P.pattern;
+        const courseBrief = Object.assign(progBrief(P), { pattern: p.scheduleText || P.pattern });
+        const near = (Q) => Q.stops.length ? Math.min(...Q.stops.map((qs) => distanceM(qs.loc, st.loc))) : null;
+        const base = {
+          type: 'program', siteId: st.siteId, location: `${st.name}, ${st.suburb}`, suburbs: [st.suburb],
+          intake: it || null, courseId: P.id
+        };
+
+        // a) Guest specialist sessions during the course.
+        const guests = [];
+        const seenOrg = new Set([P.org]);
+        const wanted = prof(P.org).wants.categories;
+        const guestProgs = (DATA.programs || []).filter((q) => GUEST_CATS.has(q.category) && q.organisationId !== P.org)
+          .map((q) => ({ q, Q: allProgs.get(q.programId) }))
+          .filter(({ q }) => servesSuburb(q.organisationId, st.suburb) && (prof(q.organisationId).offers.visitingSpecialist === true || interested(q.organisationId, 'program')))
+          .sort((x, y) => (Number(wanted.includes(y.q.category)) - Number(wanted.includes(x.q.category))) || (Number(interested(y.q.organisationId, 'program')) - Number(interested(x.q.organisationId, 'program'))));
+        guestProgs.forEach(({ q, Q }) => {
+          if (guests.length >= 3 || seenOrg.has(q.organisationId) || guests.some((g) => g.q.category === q.category)) return;
+          seenOrg.add(q.organisationId);
+          guests.push({ q, Q });
+        });
+        if (guests.length) {
+          const allDeclared = interested(P.org, 'program') && guests.every((g) => interested(g.q.organisationId, 'program') || prof(g.q.organisationId).offers.visitingSpecialist === true);
+          const topics = guests.map((g) => category(g.q.category).label.toLowerCase());
+          add(Object.assign({}, base, {
+            id: `program|guest|${P.id}`, status: allDeclared ? 'potential' : 'investigate',
+            title: `Guest specialist session${guests.length > 1 ? 's' : ''} during ${P.name}`,
+            summary: `${listText(guests.map((g) => orgName(g.q.organisationId)))} could each present one session on ${listText(topics)} to course participants.`,
+            window: `${P.name}: ${p.scheduleText || P.pattern}`,
+            when: `During the course, ${days}`,
+            benefit: `Participants could learn about ${listText(topics)} from a trusted setting, without a separate appointment.`,
+            why: `The course runs for ${plural(p.durationWeeks || P.segs.length, 'week')} with the same group of participants. These providers list ${st.suburb} in their service area and have declared visiting or program capability.`,
+            declared: [interested(P.org, 'program') ? `${orgName(P.org)} is interested in program partners (declared)` : '', ...guests.map((g) => (interested(g.q.organisationId, 'program') ? `${orgName(g.q.organisationId)}: program partner (declared)` : `${orgName(g.q.organisationId)}: visiting sessions (declared)`))].filter(Boolean),
+            orgIds: [P.org, ...guests.map((g) => g.q.organisationId)], categories: [P.cat, ...guests.map((g) => g.q.category)],
+            parties: [
+              { org: P.org, role: 'Course provider', mode: 'fixed', programs: [courseBrief] },
+              ...guests.map((g) => ({ org: g.q.organisationId, role: `Possible guest presenter (${category(g.q.category).label.toLowerCase()})`, mode: g.q.deliveryMode, programs: [g.Q ? progBrief(g.Q) : { id: g.q.programId, name: g.q.programName, org: g.q.organisationId, cat: g.q.category, mode: g.q.deliveryMode, pattern: g.q.scheduleText, statuses: [] }] }))
+            ],
+            facts: [
+              ['Course', `${P.name}, ${orgName(P.org)}`],
+              ['Intake', it ? O.intakeText(it) : 'Not specified'],
+              ['Entry', (O.DATA.lookups.entryRequirements[p.entryRequirement] || 'Not specified')],
+              ['Where', `${st.name}, ${st.suburb}${site && site.hostOrganisationId && site.hostOrganisationId !== P.org ? ` (hosted by ${orgName(site.hostOrganisationId)})` : ''}`],
+              ['Possible guest topics', guests.map((g) => `${category(g.q.category).label}: ${orgName(g.q.organisationId)}`).join('; ')],
+              ['Session counts', `${plural(P.segs.length, 'session')} of one intake recorded in this period. Course sessions are not separate programs or separate enrolment opportunities.`]
+            ],
+            graphic: { kind: 'hub', center: P.name, centerCat: P.cat, nodes: guests.map((g) => ({ org: g.q.organisationId, cat: g.q.category, mode: g.q.deliveryMode, at: false })) }
+          }));
+        }
+
+        // b) A referral pathway for participants after the course finishes.
+        const after = (DATA.programs || []).filter((q) => PATHWAY_CATS.has(q.category) && q.organisationId !== P.org && q.programId !== P.id
+          && (q.programType === 'rolling' || q.programType === 'drop_in' || q.entryRequirement === 'join_anytime'))
+          .map((q) => ({ q, Q: allProgs.get(q.programId) }))
+          .filter(({ q, Q }) => Q && (servesSuburb(q.organisationId, st.suburb) || (near(Q) != null && near(Q) <= REFERRAL_M)))
+          .slice(0, 3);
+        if (after.length) {
+          add(Object.assign({}, base, {
+            id: `program|pathway|${P.id}`, status: 'potential',
+            title: `A next step for participants after ${P.name}`,
+            summary: `${listText(after.map(({ Q }) => `${Q.name} (${orgName(Q.org)})`))} can be joined at any time, so participants could be referred on when the course finishes.`,
+            window: after.map(({ Q }) => `${Q.name}: ${Q.pattern}`).join('; '),
+            when: it ? `After the course finishes on ${fmtDate(it.completionDate)}` : 'After the course finishes',
+            benefit: 'Participants could keep building skills with a known next step, rather than finishing with no connection.',
+            why: `These programs accept people at any time and operate in or near ${st.suburb}. No referral arrangement is recorded.`,
+            declared: [interested(P.org, 'referral') ? `${orgName(P.org)} is interested in referral partners (declared)` : '', ...after.map(({ q }) => (interested(q.organisationId, 'program') || interested(q.organisationId, 'referral') ? `${orgName(q.organisationId)} is interested in program or referral partners (declared)` : ''))].filter(Boolean),
+            orgIds: [P.org, ...after.map(({ q }) => q.organisationId)], categories: [P.cat, ...after.map(({ q }) => q.category)],
+            parties: [
+              { org: P.org, role: 'Course provider', mode: 'fixed', programs: [courseBrief] },
+              ...after.map(({ Q }) => ({ org: Q.org, role: `Next-step program (${category(Q.cat).label.toLowerCase()})`, mode: Q.mode, programs: [progBrief(Q)] }))
+            ],
+            facts: [
+              ['Course', `${P.name}, ${orgName(P.org)}: ${p.scheduleText || P.pattern}`],
+              ['Next-step programs', after.map(({ q, Q }) => `${Q.name}, ${orgName(Q.org)} (${O.DATA.lookups.entryRequirements[q.entryRequirement] || (O.DATA.lookups.programTypes[q.programType] || {}).label || 'entry not specified'}): ${Q.pattern}`).join(' | ')],
+              ['Referral relationship', 'None recorded. This is a possibility only.']
+            ],
+            graphic: { kind: 'pair', a: { cat: P.cat, org: P.org, mode: 'fixed' }, b: { cat: after[0].Q.cat, org: after[0].Q.org, mode: after[0].Q.mode } }
+          }));
+        }
+
+        // c) Coordinated commencement with another course in the same suburb.
+        courses.filter((C) => C.id > P.id && C.org !== P.org && C.stops[0].suburb === st.suburb).forEach((C) => {
+          const c = programById.get(C.id);
+          const ci = intakeOf(c);
+          const sameWeek = it && ci && Math.abs(O.daysBetween(it.commencementDate, ci.commencementDate)) <= 7;
+          const clash = P.segs.some((s) => C.segs.some((t) => s.date === t.date && s.start < t.end && t.start < s.end));
+          add(Object.assign({}, base, {
+            id: `program|start|${P.id}|${C.id}`, status: 'potential', courseId: P.id,
+            title: `Coordinate start dates for ${P.name} and ${C.name}`,
+            summary: `Both courses run in ${st.suburb}${sameWeek ? ' and start in the same week' : ''}. ${clash ? 'Some sessions run at the same time.' : 'Their sessions do not clash, so people could attend both.'}`,
+            window: `${P.name}: ${p.scheduleText || P.pattern}; ${C.name}: ${c.scheduleText || C.pattern}`,
+            when: it && ci ? `Next intakes: ${fmtDate(it.commencementDate)} and ${fmtDate(ci.commencementDate)}` : 'Next intakes',
+            benefit: 'Coordinated dates and shared promotion could help people take part in both courses.',
+            why: `Two fixed-term courses with set start dates are recorded in the same suburb. Participants must commence at the start${c.entryRequirement === 'provider_approval' ? ' (late entry by provider approval for one course)' : ''}, so start dates matter.`,
+            declared: [interested(P.org, 'program') ? `${orgName(P.org)}: program partners (declared)` : '', interested(C.org, 'program') ? `${orgName(C.org)}: program partners (declared)` : ''].filter(Boolean),
+            orgIds: [P.org, C.org], categories: [P.cat, C.cat], suburbs: [st.suburb, C.stops[0].suburb],
+            parties: [
+              { org: P.org, role: 'Course provider', mode: 'fixed', programs: [courseBrief] },
+              { org: C.org, role: 'Course provider', mode: 'fixed', programs: [Object.assign(progBrief(C), { pattern: c.scheduleText || C.pattern })] }
+            ],
+            facts: [
+              ['Courses', `${P.name} (${it ? O.intakeText(it) : 'intake not specified'}); ${C.name} (${ci ? O.intakeText(ci) : 'intake not specified'})`],
+              ['Sessions at the same time', clash ? 'Yes, on some dates' : 'No']
+            ],
+            graphic: { kind: 'pair', a: { cat: P.cat, org: P.org, mode: 'fixed' }, b: { cat: C.cat, org: C.org, mode: 'fixed' } }
+          }));
+        });
+      });
+    }
+
     // Relevance to the selected geography, service types and agency.
     const sel = opt.categories;
     const catOK = (o) => {
@@ -891,10 +1114,70 @@
       .sort((x, y) => (x.typeInfo.n - y.typeInfo.n) || (statusRank[x.status] - statusRank[y.status]) || (y.orgIds.length - x.orgIds.length));
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Community Hub Builder: potential partners for a host and services    */
+  /* ------------------------------------------------------------------ */
+
+  // host: { siteId?, org?, suburb, loc:{latitude,longitude}, council }. cats: service types wanted.
+  // Only organisations recorded in the dataset are returned; missing categories stay empty.
+  function hubPartners(host, cats, opt) {
+    const segs = buildOccurrences(activities).segments.filter((s) => s.date >= opt.from && s.date <= opt.to);
+    const all = programsOf(segs);
+    const hostCats = host.siteId ? uniq(segs.filter((s) => s.a.siteId === host.siteId).map((s) => s.a.category)) : [];
+    const councilSubs = Object.keys(SUBURB_COUNCIL).filter((s) => SUBURB_COUNCIL[s].council === host.council);
+    const out = new Map();
+    cats.forEach((cat) => {
+      const list = [];
+      (DATA.programs || []).filter((p) => p.category === cat && p.organisationId !== host.org).forEach((p) => {
+        const org = p.organisationId;
+        const P = all.get(p.programId);
+        const pr = prof(org);
+        const atSite = !!(host.siteId && P && P.stops.some((st) => st.siteId === host.siteId));
+        const d = P && P.stops.length ? Math.round(Math.min(...P.stops.map((st) => distanceM(st.loc, host.loc)))) : null;
+        const serves = servesSuburb(org, host.suburb);
+        const inCouncil = (P && P.segs.some((s) => councilOf(s.a) === host.council)) || ((orgById.get(org) || {}).areasServed || []).some((s) => councilSubs.includes(s));
+        const mobile = p.deliveryMode === 'mobile' || pr.offers.mobileDelivery === true;
+        const visiting = pr.offers.visitingSpecialist === true;
+        const hub = pr.wants.interests.includes('hub');
+        const seeksHost = pr.wants.interests.includes('hosts');
+        const wantsHere = pr.wants.categories.some((c) => hostCats.includes(c));
+        if (!atSite && !serves && !inCouncil) return;
+        const reasons = [];
+        if (atSite) reasons.push('Already delivers at this site');
+        if (serves) reasons.push(`Lists ${host.suburb} in its service area`);
+        if (d != null && !atSite) reasons.push(d <= NEAR_M ? `Already operates ${fmtKm(d)} away` : d <= REFERRAL_M ? `Operates ${fmtKm(d)} away` : `Nearest recorded location is ${fmtKm(d)} away`);
+        if (p.deliveryMode === 'mobile') reasons.push('Mobile service that already travels to community locations');
+        if (visiting) reasons.push('Can deliver visiting specialist sessions (declared)');
+        if (hub) reasons.push('Interested in community hub partnerships (declared)');
+        if (seeksHost) reasons.push('Looking for sites to host its services (declared)');
+        if (wantsHere) reasons.push('Wants to connect with services already at this site (declared)');
+        const unknowns = [];
+        if (!pr.hasProfile) unknowns.push('Collaboration interests not specified');
+        if (!atSite && !mobile && !visiting) unknowns.push('Outreach capability not recorded');
+        if (!P) unknowns.push(p.publicSchedule === false ? 'Times and locations not published' : 'No sessions recorded in this period');
+        const fit = atSite ? 'existing' : (serves && (mobile || visiting || hub || seeksHost)) ? 'strong' : (serves || (d != null && d <= REFERRAL_M && (mobile || visiting))) ? 'possible' : 'investigate';
+        const score = (atSite ? 100 : 0) + (hub ? 6 : 0) + (seeksHost ? 4 : 0) + (visiting || mobile ? 5 : 0) + (serves ? 5 : 0) + (wantsHere ? 2 : 0)
+          + (d != null ? (d <= NEAR_M ? 3 : d <= REFERRAL_M ? 2 : 0) : 0) + (P ? 1 : 0);
+        list.push({
+          org, programId: p.programId, name: p.programName, cat, mode: p.deliveryMode, atSite, d, serves, inCouncil,
+          locations: P ? uniq(P.stops.map((st) => `${st.name}, ${st.suburb}`)) : [],
+          pattern: P ? P.pattern : (p.scheduleText || 'No public schedule recorded'),
+          segs: P ? P.segs : [], interests: pr.wants.interests.slice(), hasProfile: pr.hasProfile,
+          reasons, unknowns, fit, score, program: p
+        });
+      });
+      // One entry per organisation per service type (its most relevant program).
+      const best = new Map();
+      list.sort((x, y) => y.score - x.score).forEach((c) => { if (!best.has(c.org)) best.set(c.org, c); });
+      out.set(cat, [...best.values()]);
+    });
+    return out;
+  }
+
   window.OnNowAnalysis = {
     buildOccurrences, sweep, intervalsByDay, peakOf, analyse, profile, concentration, gapsForDay,
     similarOverlaps, categoryGaps, suburbGaps, opportunities, programsOf, patternText, commonRange,
-    distanceM, toMin, validDate, groupBy, groupOf, groupLabel, orgName, stopName,
-    NEAR_M, REFERRAL_M, TYPES, STATUSES, CONSIDER
+    distanceM, toMin, validDate, groupBy, groupOf, groupLabel, orgName, stopName, hubPartners, facilitiesText, fmtKm,
+    NEAR_M, REFERRAL_M, TYPES, STATUSES, CONSIDER, BASIC, SUPPORT
   };
 })();

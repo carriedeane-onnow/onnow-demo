@@ -10,8 +10,9 @@
   <!-- Leaflet: free, open-source map library (loaded from a public CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="analysis.css">
+  <link rel="stylesheet" href="styles.css?v=4.0">
+  <link rel="stylesheet" href="analysis.css?v=4.0">
+  <link rel="stylesheet" href="collaborate.css?v=4.0">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -19,20 +20,24 @@
   <!-- ===== Shared application header ===== -->
   <header class="app-header">
     <div class="app-header-inner">
-      <a class="brand" href="#explore" aria-label="OnNow home: Explore Activities">
+      <a class="brand" href="#collaborate" aria-label="OnNow home: Collaborate">
         <img class="brand-logo" src="Colour-Logo-TAG400px.png" alt="OnNow: Instantly connecting communities" width="400" height="235">
       </a>
       <nav class="app-nav" aria-label="OnNow pages">
-        <button type="button" class="nav-tab" data-page="explore" aria-current="page">
-          <span class="nav-ico" data-icon="map" data-size="24"></span>
+        <button type="button" class="nav-tab nav-tab--collaborate" data-page="collaborate" aria-current="page">
+          <span class="nav-ico" data-icon="collaborate" data-size="26"></span>
+          <span class="nav-text"><strong>Collaborate</strong><small>Work together</small></span>
+        </button>
+        <button type="button" class="nav-tab nav-tab--explore" data-page="explore">
+          <span class="nav-ico" data-icon="map" data-size="26"></span>
           <span class="nav-text"><strong>Explore Activities</strong><small>Find services</small></span>
         </button>
-        <button type="button" class="nav-tab" data-page="insights">
-          <span class="nav-ico" data-icon="insight" data-size="24"></span>
-          <span class="nav-text"><strong>Service Insights</strong><small>Find opportunities</small></span>
+        <button type="button" class="nav-tab nav-tab--insights" data-page="insights">
+          <span class="nav-ico" data-icon="insight" data-size="26"></span>
+          <span class="nav-text"><strong>Service Insights</strong><small>Understand service delivery</small></span>
         </button>
-        <button type="button" class="nav-tab" data-page="reports">
-          <span class="nav-ico" data-icon="report" data-size="24"></span>
+        <button type="button" class="nav-tab nav-tab--reports" data-page="reports">
+          <span class="nav-ico" data-icon="report" data-size="26"></span>
           <span class="nav-text"><strong>Reports</strong><small>Plan and collaborate</small></span>
         </button>
       </nav>
@@ -48,9 +53,77 @@
   <div id="main-content" tabindex="-1">
 
   <!-- =================================================================== -->
+  <!-- COLLABORATE (default landing page)                                  -->
+  <!-- =================================================================== -->
+  <main class="page page--collaborate" id="page-collaborate" aria-labelledby="cb-title">
+    <section class="cb-hero" aria-labelledby="cb-title">
+      <div class="cb-hero-text">
+        <p class="cb-kicker">Collaborate · Work together</p>
+        <h1 id="cb-title">Connect, coordinate and deliver better services together</h1>
+        <p>Turning fragmented service delivery into connected community support.</p>
+      </div>
+      <div class="cb-hero-art" aria-hidden="true"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="dot d4"></span><span data-badge="collaborate" data-size="92" data-color="#3BD4AE"></span></div>
+    </section>
+
+    <section class="cb-bar" aria-label="Who is collaborating">
+      <div class="seg cb-persp" role="group" aria-label="Choose a perspective">
+        <button type="button" data-cb-persp="agency" aria-pressed="true"><span data-icon="agency" data-size="20"></span>Agency</button>
+        <button type="button" data-cb-persp="council" aria-pressed="false"><span data-icon="council" data-size="20"></span>Council</button>
+      </div>
+      <div class="fb-field cb-org-field" id="cb-org-field">
+        <label for="cb-org">Your organisation</label>
+        <select id="cb-org"></select>
+      </div>
+      <div class="fb-field" id="cb-council-field" hidden>
+        <label for="cb-council">Council</label>
+        <select id="cb-council"></select>
+      </div>
+      <button type="button" class="btn-outline" id="cb-more" aria-expanded="false" aria-controls="cb-more-panel">
+        <span data-icon="sliders"></span>More filters<span class="count-badge" id="cb-more-count" hidden></span>
+      </button>
+      <div class="more-panel cb-more-panel" id="cb-more-panel" hidden>
+        <div class="fb-row">
+          <div class="fb-field">
+            <label for="cb-period">Period</label>
+            <select id="cb-period">
+              <option value="14">14 days from demo date</option>
+              <option value="30">30 days from demo date</option>
+            </select>
+          </div>
+          <div class="fb-field fb-services">
+            <span class="fb-label" id="cb-services-label">Service types</span>
+            <div id="cb-services" aria-labelledby="cb-services-label"></div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="cb-complement" checked>
+            <span class="switch-ui" aria-hidden="true"></span>
+            <span><strong>Include complementary service types</strong> <span class="hint-inline">recommended</span></span>
+          </label>
+        </div>
+        <div class="chip-row" id="cb-chips" hidden></div>
+      </div>
+    </section>
+
+    <div id="cb-profile"></div>
+
+    <section class="cb-choices-wrap" id="cb-choices-wrap" aria-labelledby="cb-choices-title">
+      <h2 id="cb-choices-title" class="cb-h2">How would you like to collaborate?</h2>
+      <div class="cb-choices" id="cb-choices"></div>
+      <div class="cb-more-choices" id="cb-more-choices"></div>
+    </section>
+
+    <section id="cb-results" class="cb-results" aria-live="polite"></section>
+    <section id="cb-builder" class="cb-builder" hidden aria-labelledby="hb-title"></section>
+    <section id="cb-insights" class="cb-insights"></section>
+
+    <aside class="drawer cb-drawer" id="cb-drawer" aria-label="Supporting evidence" tabindex="-1" hidden></aside>
+    <div class="scrim" id="cb-scrim" hidden></div>
+  </main>
+
+  <!-- =================================================================== -->
   <!-- EXPLORE ACTIVITIES                                                   -->
   <!-- =================================================================== -->
-  <main class="page" id="page-explore" aria-labelledby="ex-title">
+  <main class="page" id="page-explore" aria-labelledby="ex-title" hidden>
     <div class="page-head">
       <span data-badge="map" data-size="52"></span>
       <div>
@@ -204,7 +277,7 @@
       <span data-badge="insight" data-size="52"></span>
       <div>
         <h1 id="in-title">Service Insights</h1>
-        <p>Understand your service area and discover opportunities to work together.</p>
+        <p>Understand service delivery: overlaps, collaboration opportunities and recorded gaps.</p>
       </div>
     </div>
 
@@ -443,14 +516,15 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="sample-data.js"></script>
-  <script src="shared.js"></script>
-  <script src="analysis.js"></script>
-  <script src="app.js"></script>
-  <script src="insights.js"></script>
-  <script src="logo-data.js"></script>
-  <script src="docx.js"></script>
-  <script src="reports.js"></script>
-  <script>if (window.OnNow) { OnNow.initNavigation(); OnNow.showPage((location.hash || '#explore').slice(1)); }</script>
+  <script src="sample-data.js?v=4.0"></script>
+  <script src="shared.js?v=4.0"></script>
+  <script src="analysis.js?v=4.0"></script>
+  <script src="app.js?v=4.0"></script>
+  <script src="insights.js?v=4.0"></script>
+  <script src="logo-data.js?v=4.0"></script>
+  <script src="docx.js?v=4.0"></script>
+  <script src="reports.js?v=4.0"></script>
+  <script src="collaborate.js?v=4.0"></script>
+  <script>if (window.OnNow) { OnNow.initNavigation(); OnNow.showPage((location.hash || '#collaborate').slice(1)); }</script>
 </body>
 </html>

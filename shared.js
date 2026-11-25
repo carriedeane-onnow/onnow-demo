@@ -22,21 +22,50 @@
   /* Brand palette                                                       */
   /* ------------------------------------------------------------------ */
 
-  // Navy and mint are sampled from the supplied logo (Colour-Logo-TAG400px.png).
+  // Original OnNow branding palette. Navy is the anchor; turquoise is the collaboration accent.
+  // Light colours (turquoise, cyan, sky, yellow, soft pink) carry navy symbols and text, not white.
   const BRAND = {
-    navy: '#28348E',      // logo "NOW" and tagline
-    navyDark: '#1C2568',
-    mint: '#52C0A5',      // logo "ON" speech bubble (accent only: too light for white text)
-    mintDark: '#23806A',  // accessible mint for buttons and icons with white symbols
+    navy: '#2A348B',
+    navyDark: '#1C2468',
+    royal: '#000F9F',
+    turquoise: '#3BD4AE',
+    cyan: '#00C1DE',
+    sky: '#00A1E2',
+    orange: '#E65300',
+    pink: '#F4436C',
+    yellow: '#FFCD00',
+    softPink: '#DE8ABA',
+    charcoal: '#323E48',
+    mint: '#3BD4AE',      // kept for earlier code: same as turquoise
+    mintDark: '#13806A',  // darker turquoise for white text and icons
     softNavy: '#ECEEF8',
-    softMint: '#E4F5F0',
-    background: '#F4F6FA',
+    softMint: '#E2F8F2',
+    background: '#F5F7FB',
     ink: '#1B2140',
     slate: '#55607A'
   };
+  // Light brand colours that need a navy (not white) symbol.
+  const LIGHT = new Set(['#3BD4AE', '#00C1DE', '#00A1E2', '#FFCD00', '#DE8ABA', '#ECEEF8', '#E2F8F2']);
 
   // One permanent icon + colour per service category (white symbol on a solid colour).
   const CATEGORY_STYLE = {
+    first_nations:         { icon: 'gathering',  color: '#A8432A' },
+    dfv_support:           { icon: 'shieldHeart', color: '#7B2D5E' },
+    financial_counselling: { icon: 'coin',       color: '#5C6B10' },
+    employment:            { icon: 'briefcase',  color: '#0067A8' },
+    education:             { icon: 'cap',        color: '#3730A3' },
+    life_skills:           { icon: 'pot',        color: '#C2264F' },
+    digital_access:        { icon: 'laptop',     color: '#334E68' },
+    disability_ndis:       { icon: 'access',     color: '#1E40AF' },
+    carer_support:         { icon: 'carer',      color: '#8C3B9E' },
+    family_support:        { icon: 'family',     color: '#A21C6F' },
+    migrant_refugee:       { icon: 'welcome',    color: '#00727F' },
+    visa_immigration:      { icon: 'passport',   color: '#6A4C2E' },
+    personal_care:         { icon: 'scissors',   color: '#9A3412' },
+    dental:                { icon: 'tooth',      color: '#4F46E5' },
+    aod_support:           { icon: 'sprout',     color: '#4D7C0F' },
+    crisis_support:        { icon: 'lifebuoy',   color: '#C81E1E' },
+    wellness:              { icon: 'dumbbell',   color: '#0F766E' },
     community_meals:      { icon: 'meals',       color: '#A65B17' },
     food_relief:          { icon: 'basket',      color: '#397545' },
     showers_hygiene:      { icon: 'shower',      color: '#16758A' },
@@ -54,7 +83,16 @@
     const s = CATEGORY_STYLE[id] || { icon: 'info', color: '#475D75' };
     Object.assign(lookups.categories[id], { color: s.color, icon: s.icon });
   });
-  const CATEGORY_IDS = Object.keys(lookups.categories);
+  // Grouped for the service picker. Every category appears in exactly one group.
+  const CATEGORY_GROUPS = [
+    { id: 'essentials', label: 'Food and essentials', cats: ['food_relief', 'community_meals', 'clothing_assistance', 'laundry', 'showers_hygiene', 'personal_care', 'veterinary'] },
+    { id: 'health', label: 'Health and wellbeing', cats: ['health_clinics', 'dental', 'mental_health', 'aod_support', 'disability_ndis', 'wellness'] },
+    { id: 'safety', label: 'Safety, housing and legal', cats: ['crisis_support', 'dfv_support', 'housing_homelessness', 'legal_assistance'] },
+    { id: 'learning', label: 'Money, work and learning', cats: ['financial_counselling', 'employment', 'education', 'english_classes', 'digital_access', 'life_skills'] },
+    { id: 'community', label: 'Families and communities', cats: ['family_support', 'carer_support', 'first_nations', 'migrant_refugee', 'visa_immigration', 'social_support'] }
+  ];
+  const CATEGORY_IDS = CATEGORY_GROUPS.flatMap((g) => g.cats).filter((c) => lookups.categories[c])
+    .concat(Object.keys(lookups.categories).filter((c) => !CATEGORY_GROUPS.some((g) => g.cats.includes(c))));
 
   /* ------------------------------------------------------------------ */
   /* Icons (24 x 24, stroke-based)                                       */
@@ -75,6 +113,36 @@
     paw: `<circle cx="5.5" cy="10.5" r="2" ${F}/><circle cx="9.5" cy="5.8" r="2" ${F}/><circle cx="14.5" cy="5.8" r="2" ${F}/><circle cx="18.5" cy="10.5" r="2" ${F}/><path d="M12 11.5c-3 0-5.5 3.6-5.5 6.2 0 1.5 1.2 2.5 2.7 2.2 1-.2 1.8-.7 2.8-.7s1.8.5 2.8.7c1.5.3 2.7-.7 2.7-2.2 0-2.6-2.5-6.2-5.5-6.2z" ${F}/>`,
     language: '<path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h7A2.5 2.5 0 0 1 15 5.5v4a2.5 2.5 0 0 1-2.5 2.5H8l-3.5 3v-3.2A2.5 2.5 0 0 1 3 9.5z"/><path d="M18 8.5h.5A2.5 2.5 0 0 1 21 11v4a2.5 2.5 0 0 1-1.5 2.3V20.5L16.5 18H13a2.5 2.5 0 0 1-2.5-2.5V15"/>',
     heartHands: '<path d="M12 11.5S8 9 8 6.4A2.1 2.1 0 0 1 12 5.5a2.1 2.1 0 0 1 4 .9c0 2.6-4 5.1-4 5.1z"/><path d="M2.5 14.5h3l4 1.8h3a1.6 1.6 0 0 1 0 3.2H9"/><path d="M14.5 19.3l4.6-2.6a1.6 1.6 0 0 1 2.1 2.3L15 22H8l-5.5-2.5"/>',
+    gathering: '<circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="3.8" r="1.8"/><circle cx="12" cy="20.2" r="1.8"/><circle cx="3.8" cy="12" r="1.8"/><circle cx="20.2" cy="12" r="1.8"/><path d="M6.6 6.6l1.5 1.5"/><path d="M17.4 6.6l-1.5 1.5"/><path d="M6.6 17.4l1.5-1.5"/><path d="M17.4 17.4l-1.5-1.5"/>',
+    shieldHeart: '<path d="M12 21.5s-7.5-3-7.5-10V5.2L12 2.5l7.5 2.7v6.3c0 7-7.5 10-7.5 10z"/><path d="M12 15.5s-3.5-2.2-3.5-4.5a1.8 1.8 0 0 1 3.5-.7 1.8 1.8 0 0 1 3.5.7c0 2.3-3.5 4.5-3.5 4.5z"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.8 8.6c-.6-.9-1.6-1.3-2.8-1.3-1.6 0-2.8.8-2.8 2.1 0 3 5.8 1.6 5.8 4.6 0 1.3-1.3 2.2-3 2.2-1.3 0-2.4-.5-3-1.4"/><path d="M12 5.6v1.7"/><path d="M12 16.2v2.2"/>',
+    briefcase: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5a1.5 1.5 0 0 1 1.5-1.5h4A1.5 1.5 0 0 1 15.5 5v2"/><path d="M3 12.5h18"/><path d="M12 11.5v2"/>',
+    cap: '<path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3V11"/><path d="M21.5 9v5"/>',
+    pot: '<path d="M4 10h16v6.5a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5z"/><path d="M2 10h20"/><path d="M9.5 6.5c0-1 1-1.2 1-2.2"/><path d="M13.5 6.5c0-1 1-1.2 1-2.2"/>',
+    laptop: '<rect x="4.5" y="4.5" width="15" height="10.5" rx="1.8"/><path d="M2 19.5h20"/><path d="M9.5 19.5l.8-2h3.4l.8 2"/>',
+    access: '<circle cx="12" cy="4.5" r="2"/><path d="M5.5 9h13"/><path d="M12 9v5"/><path d="M12 14l-3.5 7"/><path d="M12 14l3.5 7"/>',
+    carer: '<circle cx="8.5" cy="5.5" r="2.5"/><path d="M3.5 21v-5.5a5 5 0 0 1 10 0"/><path d="M17.5 17s-4-2.4-4-5a2 2 0 0 1 4-.8 2 2 0 0 1 4 .8c0 2.6-4 5-4 5z"/>',
+    family: '<circle cx="7.5" cy="5" r="2.4"/><circle cx="16.5" cy="9" r="2"/><path d="M3 21v-6.5a4.5 4.5 0 0 1 9 0V21"/><path d="M13 21v-4a3.5 3.5 0 0 1 7 0v4"/>',
+    welcome: '<circle cx="12" cy="12" r="9"/><path d="M3.5 9.5h17"/><path d="M3.5 14.5h17"/><path d="M12 3c-2.4 2.5-3.5 5.6-3.5 9s1.1 6.5 3.5 9"/><path d="M12 3c2.4 2.5 3.5 5.6 3.5 9s-1.1 6.5-3.5 9"/>',
+    passport: '<rect x="5" y="2.5" width="14" height="19" rx="2.5"/><circle cx="12" cy="10" r="3.5"/><path d="M8.5 17.5h7"/>',
+    scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.4 7.8 20 18"/><path d="M8.4 16.2 20 6"/>',
+    tooth: '<path d="M7.5 3c-2.7 0-4.5 2-4.5 4.8 0 2.4 1.2 3.6 1.7 5.7.6 2.8 1 7.5 3 7.5 1.6 0 1.6-5.5 4.3-5.5s2.7 5.5 4.3 5.5c2 0 2.4-4.7 3-7.5.5-2.1 1.7-3.3 1.7-5.7C21 5 19.2 3 16.5 3c-1.9 0-2.8 1-4.5 1S9.4 3 7.5 3z"/>',
+    sprout: '<path d="M12 21v-9"/><path d="M12 12C12 7.5 8.5 5 4 5c0 4.5 3.5 7 8 7z"/><path d="M12 14.5c0-3.8 3-6 7-6 0 3.8-3 6-7 6z"/>',
+    lifebuoy: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="M5.6 5.6l3.7 3.7"/><path d="M18.4 5.6l-3.7 3.7"/><path d="M5.6 18.4l3.7-3.7"/><path d="M18.4 18.4l-3.7-3.7"/>',
+    dumbbell: '<path d="M7.5 7v10"/><path d="M16.5 7v10"/><path d="M4.5 9.5v5"/><path d="M19.5 9.5v5"/><path d="M7.5 12h9"/><path d="M2.5 12h2"/><path d="M19.5 12h2"/>',
+    collaborate: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="3.6" r="2"/><circle cx="19.3" cy="16.2" r="2"/><circle cx="4.7" cy="16.2" r="2"/><path d="M12 5.6V9"/><path d="M17.6 15.2l-3-1.7"/><path d="M6.4 15.2l3-1.7"/>',
+    outreach: '<circle cx="5.5" cy="12" r="2.8"/><path d="M8.5 12h10"/><path d="M15 8l4 4-4 4"/><path d="M21.5 5v14"/>',
+    inbound: '<path d="M2.5 12h10"/><path d="M9 8l4 4-4 4"/><path d="M14.5 21V9.5L19 6l4 3.5V21"/><path d="M14.5 21h8"/>',
+    program: '<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18"/><path d="M8 2.5v4"/><path d="M16 2.5v4"/><path d="M7 13.5h3"/><path d="M7 17h3"/><path d="M13.5 13.5h3.5"/><path d="M13.5 17h3.5"/>',
+    plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    edit: '<path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+    star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    kitchen: '<path d="M5 3v5a2 2 0 0 0 4 0V3"/><path d="M7 10v11"/><path d="M18 21V3c-2.3 1.7-3.6 4.6-3.6 8.6H18"/>',
+    door: '<path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h11A1.5 1.5 0 0 1 19 4.5V21"/><path d="M3 21h18"/><path d="M14.5 12.5h.01"/>',
+    tree: '<path d="M12 21v-5"/><path d="M12 3 5.5 12h3L6 16h12l-2.5-4h3z"/>',
+    lock: '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+    parking: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M9.5 17V7.5h3.5a3 3 0 0 1 0 6H9.5"/>',
+    sparkle: '<path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="M6 6l2.5 2.5"/><path d="M15.5 15.5 18 18"/><path d="M6 18l2.5-2.5"/><path d="M15.5 8.5 18 6"/>',
 
     // Platform
     map: '<path d="M3 6.5 9 3.5l6 3 6-3V18l-6 3-6-3-6 3z"/><path d="M9 3.5V18"/><path d="M15 6.5V21"/>',
@@ -131,7 +199,9 @@
     const o = opt || {};
     const size = o.size || 40;
     const label = o.label ? ` role="img" aria-label="${esc(o.label)}" title="${esc(o.label)}"` : ' aria-hidden="true"';
-    return `<span class="ib${o.shape === 'square' ? ' ib--sq' : ''}${o.cls ? ' ' + o.cls : ''}" style="--ib:${o.color || BRAND.navy};--is:${size}px"${label}>${svg(name, { size: Math.round(size * (o.scale || 0.58)), stroke: o.stroke })}</span>`;
+    const bg = o.color || BRAND.navy;
+    const ink = o.ink || (LIGHT.has(String(bg).toUpperCase()) ? BRAND.navy : '#fff');
+    return `<span class="ib${o.shape === 'square' ? ' ib--sq' : ''}${o.cls ? ' ' + o.cls : ''}" style="--ib:${bg};--ibc:${ink};--is:${size}px"${label}>${svg(name, { size: Math.round(size * (o.scale || 0.58)), stroke: o.stroke })}</span>`;
   }
   const category = (id) => lookups.categories[id] || { label: id, icon: 'info', color: '#475D75' };
   const catBadge = (id, size, opt) => badge(category(id).icon, Object.assign({ color: category(id).color, size: size || 32, label: category(id).label }, opt || {}));
@@ -140,7 +210,8 @@
   // Standalone SVG string (for converting to an image for Word reports).
   function iconSvgDocument(name, color, px, shape) {
     const r = shape === 'square' ? 5 : 12;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24"><rect width="24" height="24" rx="${r}" fill="${color}"/><g transform="translate(5 5) scale(0.5833)" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" color="#ffffff">${(ICONS[name] || ICONS.info).replace(/currentColor/g, '#ffffff')}</g></svg>`;
+    const ink = LIGHT.has(String(color).toUpperCase()) ? BRAND.navy : '#ffffff';
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24"><rect width="24" height="24" rx="${r}" fill="${color}"/><g transform="translate(5 5) scale(0.5833)" fill="none" stroke="${ink}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" color="${ink}">${(ICONS[name] || ICONS.info).replace(/currentColor/g, ink)}</g></svg>`;
   }
 
   // Fill <span data-icon="name"> and <span data-badge="name"> placeholders in static HTML.
@@ -150,7 +221,7 @@
       n.classList.add('ico-wrap');
     });
     (root || document).querySelectorAll('[data-badge]').forEach((n) => {
-      n.outerHTML = badge(n.dataset.badge, { size: Number(n.dataset.size) || 40, color: n.dataset.color || undefined });
+      n.outerHTML = badge(n.dataset.badge, { size: Number(n.dataset.size) || 40, color: n.dataset.color || undefined, ink: n.dataset.ink || undefined });
     });
   }
 
@@ -259,7 +330,8 @@
     includeComplementary: true,
     perspective: 'council',    // Insights: 'council' or 'agency'
     orgId: null,
-    page: 'explore'
+    profileVersion: 0,
+    page: ''
   };
   const listeners = [];
   const on = (fn) => listeners.push(fn);
@@ -318,14 +390,18 @@
           <button type="button" class="link-btn" data-svc="clear">Clear selection</button>
           <span class="svc-pop-count" aria-live="polite"></span>
         </div>
-        <div class="svc-grid">
-          ${CATEGORY_IDS.map((c) => `
-            <label class="svc-opt">
+        <div class="svc-search input-ico"><span class="ico-wrap">${svg('search', { size: 18 })}</span><input type="search" placeholder="Search service types" aria-label="Search service types" data-svc-search></div>
+        <div class="svc-groups">
+          ${CATEGORY_GROUPS.map((g) => `<div class="svc-group" data-group="${g.id}"><h3 class="svc-group-title">${esc(g.label)}</h3><div class="svc-grid">
+          ${g.cats.filter((c) => lookups.categories[c]).map((c) => `
+            <label class="svc-opt" data-label="${esc(category(c).label.toLowerCase())}">
               <input type="checkbox" value="${c}">
               ${catBadge(c, 34, { label: '' })}
               <span class="svc-opt-label">${esc(category(c).label)}</span>
               <span class="svc-opt-n" data-n="${c}"></span>
             </label>`).join('')}
+          </div></div>`).join('')}
+          <p class="hint svc-none" hidden>No service types match your search.</p>
         </div>
         <div class="svc-pop-foot"><button type="button" class="btn" data-svc="close">Done</button></div>
       </div>`;
@@ -340,8 +416,20 @@
       p.btn.setAttribute('aria-expanded', 'true');
       document.body.classList.add('picker-open');
       renderPicker(p);
-      const first = p.pop.querySelector('input');
+      const first = p.pop.querySelector('[data-svc-search]');
       if (first) first.focus();
+    });
+    p.pop.addEventListener('input', (e) => {
+      if (!e.target.matches('[data-svc-search]')) return;
+      const q = e.target.value.trim().toLowerCase();
+      let any = false;
+      p.pop.querySelectorAll('.svc-group').forEach((g) => {
+        let shown = 0;
+        g.querySelectorAll('.svc-opt').forEach((o) => { const hit = !q || o.dataset.label.includes(q); o.hidden = !hit; if (hit) shown += 1; });
+        g.hidden = !shown;
+        if (shown) any = true;
+      });
+      p.pop.querySelector('.svc-none').hidden = any;
     });
     p.pop.addEventListener('change', (e) => {
       if (!e.target.matches('input[type=checkbox]')) return;
@@ -376,7 +464,7 @@
       ? '<strong>All service types</strong>'
       : `<strong>${sel.size} selected</strong> <span class="svc-mini">${[...sel].slice(0, 4).map((c) => catBadge(c, 20, { label: '' })).join('')}</span>`;
     p.btn.setAttribute('aria-label', `Service types: ${all ? 'all service types' : `${sel.size} selected`}`);
-    p.pop.querySelectorAll('input').forEach((i) => { i.checked = sel.has(i.value); });
+    p.pop.querySelectorAll('input[type=checkbox]').forEach((i) => { i.checked = sel.has(i.value); });
     p.pop.querySelector('.svc-pop-count').textContent = sel.size === 0 ? 'All included' : `${sel.size} of ${CATEGORY_IDS.length} selected`;
     if (p.counts && !p.pop.hidden) {
       const counts = p.counts();
@@ -400,15 +488,87 @@
   }, true);
 
   /* ------------------------------------------------------------------ */
+  /* Agency collaboration profiles (fictional; local demo edits only)    */
+  /* ------------------------------------------------------------------ */
+
+  const OFFER_FIELDS = [
+    { k: 'indoorSpace', label: 'Indoor meeting or consultation space', icon: 'door' },
+    { k: 'outdoorSpace', label: 'Outdoor space', icon: 'tree' },
+    { k: 'kitchen', label: 'Kitchen facilities', icon: 'kitchen' },
+    { k: 'mobileDelivery', label: 'Mobile service delivery', icon: 'van' },
+    { k: 'visitingSpecialist', label: 'Visiting specialist services', icon: 'outreach' },
+    { k: 'vehicleAccess', label: 'Parking or access for a service van', icon: 'parking' },
+    { k: 'privateRoom', label: 'Private room for confidential conversations', icon: 'lock' }
+  ];
+  const OFFER_TEXT = [
+    { k: 'attendance', label: 'Established community attendance', icon: 'people' },
+    { k: 'hostingTimes', label: 'Available hosting days and times', icon: 'schedule' }
+  ];
+  const INTERESTS = {
+    hosts:    { label: 'Potential hosting partners', help: 'Sites that could host our services', icon: 'fixedSite' },
+    visiting: { label: 'Visiting service providers', help: 'Providers who could visit our site', icon: 'inbound' },
+    mobile:   { label: 'Shared mobile delivery partners', help: 'Mobile services to share stops or routes with', icon: 'van' },
+    hub:      { label: 'Community hub partners', help: 'Organisations to deliver together in one place', icon: 'collaborate' },
+    referral: { label: 'Referral partners', help: 'Services to connect people with', icon: 'referral' },
+    program:  { label: 'Program partners', help: 'Guest sessions, courses and workshops', icon: 'program' }
+  };
+  const PROFILE_KEY = 'onnow-demo-profiles-v1';
+  let localProfiles = {};
+  try { localProfiles = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {}; } catch (e) { localProfiles = {}; }
+  function profileOf(orgId) {
+    const base = (DATA.collaborationProfiles || {})[orgId];
+    const edit = localProfiles[orgId];
+    const src = edit || base || {};
+    const offers = {};
+    OFFER_FIELDS.forEach((f) => { offers[f.k] = src.offers && typeof src.offers[f.k] === 'boolean' ? src.offers[f.k] : null; });
+    OFFER_TEXT.forEach((f) => { offers[f.k] = (src.offers && src.offers[f.k]) || null; });
+    offers.amenities = (src.offers && src.offers.amenities) || [];
+    return {
+      offers,
+      wants: { categories: ((src.wants && src.wants.categories) || []).slice(), interests: ((src.wants && src.wants.interests) || []).slice() },
+      hasProfile: !!(base || edit), edited: !!edit
+    };
+  }
+  function saveProfile(orgId, profile) {
+    localProfiles[orgId] = { offers: profile.offers, wants: profile.wants };
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(localProfiles)); } catch (e) { /* kept for this visit only */ }
+    set({ profileVersion: (state.profileVersion || 0) + 1 }, 'profile');
+  }
+  function resetProfile(orgId) {
+    delete localProfiles[orgId];
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(localProfiles)); } catch (e) { /* ignore */ }
+    set({ profileVersion: (state.profileVersion || 0) + 1 }, 'profile');
+  }
+  const yesNo = (v) => (v === true ? 'Yes' : v === false ? 'No' : 'Not specified');
+
+  // Program structure and participation (optional fields; unknown stays unknown).
+  function participation(p) {
+    if (!p) return [];
+    const L = lookups;
+    const rows = [];
+    if (p.programType && L.programTypes[p.programType]) rows.push(['Program type', L.programTypes[p.programType].label]);
+    if (p.accessMethod && L.accessMethods[p.accessMethod]) rows.push(['How to access', L.accessMethods[p.accessMethod]]);
+    if (p.entryRequirement && L.entryRequirements[p.entryRequirement]) rows.push(['Entry', L.entryRequirements[p.entryRequirement]]);
+    if (p.durationWeeks) rows.push(['Program duration', plural(p.durationWeeks, 'week')]);
+    if (p.sessionDurationMinutes) rows.push(['Session length', p.sessionDurationMinutes % 60 ? `${p.sessionDurationMinutes} minutes` : plural(p.sessionDurationMinutes / 60, 'hour')]);
+    if (p.attendanceCommitment) rows.push(['Attendance', p.attendanceCommitment]);
+    if (p.eligibility) rows.push(['Eligibility', p.eligibility]);
+    if (p.cost) rows.push(['Cost', p.cost]);
+    if (p.capacity) rows.push(['Capacity', `${p.capacity} places`]);
+    return rows;
+  }
+  const intakeText = (it) => `Intake ${it.intakeId}: ${fmtDate(it.commencementDate)} to ${fmtDate(it.completionDate)}${it.registrationDeadline ? `, register by ${fmtDate(it.registrationDeadline)}` : ''} · ${lookups.enrolmentStatuses[it.enrolmentStatus] || 'Enrolment status not specified'}`;
+
+  /* ------------------------------------------------------------------ */
   /* Page navigation                                                     */
   /* ------------------------------------------------------------------ */
 
-  const PAGES = ['explore', 'insights', 'reports'];
+  const PAGES = ['collaborate', 'explore', 'insights', 'reports'];
   const pageHandlers = {};
   function registerPage(name, handler) { pageHandlers[name] = handler; }
 
   function showPage(page, opts) {
-    if (!PAGES.includes(page)) page = 'explore';
+    if (!PAGES.includes(page)) page = 'collaborate';
     closePicker();
     const prev = state.page;
     state.page = page;
@@ -438,7 +598,8 @@
   }
 
   window.OnNow = {
-    DATA, BRAND, CATEGORY_IDS, ICONS, COUNCILS, SUBURB_COUNCIL, DEMO_DATE, WEEKDAYS, WEEKDAY_PLURAL,
+    DATA, BRAND, LIGHT, CATEGORY_IDS, CATEGORY_GROUPS, ICONS, COUNCILS,
+    OFFER_FIELDS, OFFER_TEXT, INTERESTS, profileOf, saveProfile, resetProfile, yesNo, participation, intakeText, SUBURB_COUNCIL, DEMO_DATE, WEEKDAYS, WEEKDAY_PLURAL,
     orgById: new Map(organisations.map((o) => [o.organisationId, o])),
     programById: new Map((DATA.programs || []).map((p) => [p.programId, p])),
     siteById: new Map((DATA.sites || []).map((s) => [s.siteId, s])),

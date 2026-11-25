@@ -454,6 +454,16 @@
     return out.sort((x, y) => (cmp(x, y) * state.sortDir) || sorters.when(x.rep, y.rep));
   }
 
+  function courseTag(p) {
+    if (!p || !p.programType || p.programType === 'drop_in') return '';
+    const L = DATA.lookups;
+    if (p.programType === 'fixed_term') {
+      const it = (p.intakes || [])[0];
+      return ` <span class="course-tag">${svg('program', { size: 14 })}${esc(p.durationWeeks ? `${p.durationWeeks}-week course` : 'Course')}${it ? ` · starts ${esc(fmtDay(it.commencementDate))}` : ''}${p.entryRequirement === 'start_only' ? ' · join at the start' : ''}</span>`;
+    }
+    return ` <span class="course-tag">${esc((L.programTypes[p.programType] || {}).label || '')}</span>`;
+  }
+
   function renderPrograms(list) {
     const groups = programGroups(list);
     const shown = groups.slice(0, state.limit);
@@ -467,7 +477,7 @@
         <button type="button" class="prog-head" data-prog="${esc(g.pid)}" aria-expanded="${open}">
           ${catBadge(a.category, 44)}
           <span class="prog-title"><strong>${esc(g.program ? g.program.programName : a.activityName)}</strong><span>${esc(orgName(a))}</span>
-            <span class="act-meta">${modeTag(mobile ? 'mobile' : 'fixed')} ${statusBadge(a.verificationStatus)}</span></span>
+            <span class="act-meta">${modeTag(mobile ? 'mobile' : 'fixed')} ${statusBadge(a.verificationStatus)}${courseTag(g.program)}</span></span>
           <span class="prog-where"><strong>${sites.length > 1 ? `${sites.length} locations` : esc(placeName(sites[0]))}</strong><span>${esc([...new Set(sites.map((x) => x.suburb))].join(', '))}</span></span>
           <span class="prog-pattern"><strong>${g.isNext ? 'Next' : 'Last'}: ${esc(fmtDay(a.date))}, ${esc(timeRange(a))}</strong><span>${esc(pattern)}</span></span>
           <span class="prog-count"><strong>${g.acts.length}</strong><span>${g.acts.length === 1 ? 'session' : 'sessions'}</span></span>
@@ -564,6 +574,23 @@
       </button></li>`).join('')}</ul>`;
   }
 
+  // Program structure, intake and participation (only shown where recorded).
+  function participationHtml(program, a) {
+    const rows = O.participation(program);
+    const intakes = (program && program.intakes) || [];
+    if (!rows.length && !intakes.length && !a.sessionNumber) return '';
+    const sessionLine = a.sessionNumber
+      ? `<p class="part-session"><strong>Session ${a.sessionNumber} of ${a.sessionsInIntake}</strong> of intake ${esc(a.intakeId)}.${program && program.entryRequirement === 'start_only' ? ' This is one course: new participants must commence in week 1, so later sessions are not separate enrolment opportunities.' : ''}</p>`
+      : '';
+    return `<section class="d-section">
+      <h3>${svg('program', { size: 18 })}Program and participation</h3>
+      ${sessionLine}
+      ${rows.length ? `<dl class="facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}
+      ${intakes.length ? `<h4 class="part-h">Intakes</h4><ul class="part-intakes">${intakes.map((it) => `<li>${esc(O.intakeText(it))}</li>`).join('')}</ul>` : ''}
+      <p class="hint">Fictional details. Anything not shown is not recorded. OnNow does not take enrolments.</p>
+    </section>`;
+  }
+
   function renderDetails(a) {
     const org = orgById.get(a.organisationId) || {};
     const st = O.status(a.verificationStatus);
@@ -638,10 +665,12 @@
           <p>${esc(a.description)}</p>
         </section>
 
+        ${participationHtml(program, a)}
+
         <section class="d-section">
-          <h3>${svg('handshake', { size: 18 })}Collaboration</h3>
+          <h3>${svg('collaborate', { size: 18 })}Collaboration</h3>
           <div class="d-actions">
-            <button type="button" class="btn btn-mint" data-insight="org">${svg('agency', { size: 18 })}Opportunities for ${esc(org.organisationName || 'this organisation')}</button>
+            <button type="button" class="btn btn-mint" data-insight="org">${svg('agency', { size: 18 })}Collaborate as ${esc(org.organisationName || 'this organisation')}</button>
             <button type="button" class="btn-outline" data-insight="place">${svg('pin', { size: 18 })}Opportunities in ${esc(a.suburb)}</button>
           </div>
         </section>
@@ -727,10 +756,11 @@
         closeDetails();
         if (ins.dataset.insight === 'org') {
           O.set({ perspective: 'agency', orgId: a.organisationId, council, suburb: 'all' }, 'explore-link');
+          O.showPage('collaborate', {});
         } else {
           O.set({ perspective: 'council', council, suburb: a.suburb }, 'explore-link');
+          O.showPage('insights', { view: 'collab' });
         }
-        O.showPage('insights', { view: 'collab' });
         return;
       }
       const rel = e.target.closest('[data-select]');

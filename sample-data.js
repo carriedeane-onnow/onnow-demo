@@ -55,15 +55,51 @@ window.ONNOW_SAMPLE_DATA = {
       food_relief:          { label: 'Food relief',              glyph: 'F',  color: '#0f766e', description: 'Pantries, hampers, food rescue and low-cost groceries.' },
       community_meals:      { label: 'Community meals',          glyph: 'M',  color: '#b45309', description: 'Shared meals, lunches, dinners and breakfast programs.' },
       housing_homelessness: { label: 'Housing & homelessness',   glyph: 'H',  color: '#6d28d9', description: 'Street outreach, bedding and housing support.' },
-      health_clinics:       { label: 'Health clinics',           glyph: '+',  color: '#be123c', description: 'GP, nurse, dental, screening and vaccination clinics.' },
+      health_clinics:       { label: 'Health clinics',           glyph: '+',  color: '#be123c', description: 'GP, nurse, screening and vaccination clinics.' },
       mental_health:        { label: 'Mental health services',   glyph: 'MH', color: '#9d174d', description: 'Drop-ins, peer support and counselling.' },
       legal_assistance:     { label: 'Legal assistance',         glyph: 'L',  color: '#1e3a8a', description: 'Free legal advice on tenancy, fines, debt and family matters.' },
       clothing_assistance:  { label: 'Clothing assistance',      glyph: 'C',  color: '#4d7c0f', description: 'Free clothing, uniform and winter wear.' },
       laundry:              { label: 'Laundry facilities',       glyph: 'LF', color: '#0369a1', description: 'Free washing and drying facilities.' },
       showers_hygiene:      { label: 'Showers & hygiene',        glyph: 'S',  color: '#0e7490', description: 'Showers, toiletries and hygiene packs.' },
-      veterinary:           { label: 'Veterinary services',      glyph: 'V',  color: '#7c2d12', description: 'Free or low-cost pet health checks and treatment.' },
+      veterinary:           { label: 'Vet care & pet support',   glyph: 'V',  color: '#7c2d12', description: 'Free or low-cost pet health checks, treatment and pet food.' },
       english_classes:      { label: 'English language classes', glyph: 'EN', color: '#334155', description: 'Conversation and English classes for adults.' },
-      social_support:       { label: 'Referrals & social support', glyph: 'R',  color: '#a21caf', description: 'Drop-in social support, information and referrals.' }
+      social_support:       { label: 'Community & social support', glyph: 'R',  color: '#a21caf', description: 'Drop-in social support, community connection, information and referrals.' },
+      // ---- Phase 4: wider social and welfare sector (service types, not delivery methods) ----
+      first_nations:         { label: 'First Nations services',            glyph: 'FN', description: 'Services delivered by or for Aboriginal and Torres Strait Islander communities.' },
+      dfv_support:           { label: 'Domestic & family violence support', glyph: 'DV', description: 'Specialist support, safety planning and advocacy.' },
+      financial_counselling: { label: 'Financial counselling',             glyph: '$',  description: 'Free, confidential help with debts, bills and budgeting.' },
+      employment:            { label: 'Employment support',                glyph: 'J',  description: 'Job search, resumes, interview practice and work readiness.' },
+      education:             { label: 'Education & training',              glyph: 'ED', description: 'Courses, workshops and pathways into further learning.' },
+      life_skills:           { label: 'Life skills',                       glyph: 'LS', description: 'Practical skills such as cooking, budgeting and household management.' },
+      digital_access:        { label: 'Digital access & computer help',    glyph: 'DA', description: 'Computer, phone and internet access with help to use them.' },
+      disability_ndis:       { label: 'Disability & NDIS support',         glyph: 'ND', description: 'Disability support, NDIS information and access help.' },
+      carer_support:         { label: 'Carer support',                     glyph: 'CS', description: 'Support, respite information and groups for unpaid carers.' },
+      family_support:        { label: 'Childcare & family support',        glyph: 'FS', description: 'Playgroups, parenting support and family services.' },
+      migrant_refugee:       { label: 'Migrant & refugee services',        glyph: 'MR', description: 'Settlement support for people from migrant and refugee backgrounds.' },
+      visa_immigration:      { label: 'Visa & immigration support',        glyph: 'VI', description: 'Information and help with visa and immigration matters.' },
+      personal_care:         { label: 'Haircuts & personal care',          glyph: 'PC', description: 'Free haircuts, grooming and personal care.' },
+      dental:                { label: 'Dental services',                   glyph: 'DE', description: 'Dental checks, cleaning and treatment.' },
+      aod_support:           { label: 'Drug & alcohol support',            glyph: 'AD', description: 'Counselling, harm reduction and recovery support.' },
+      crisis_support:        { label: 'Crisis support',                    glyph: 'CR', description: 'Immediate help in a crisis, including emergency relief.' },
+      wellness:              { label: 'Wellness & fitness',                glyph: 'WF', description: 'Exercise, walking groups and wellbeing activities.' }
+    },
+
+    // Program structure (how a program runs) is separate from access (how people join).
+    programTypes: {
+      drop_in:     { label: 'Drop-in service', help: 'Come along during opening hours.' },
+      fixed_term:  { label: 'Fixed-term program', help: 'Runs for a set number of weeks with a start and finish date.' },
+      rolling:     { label: 'Rolling enrolment program', help: 'Ongoing program that people can join at different times.' },
+      appointment: { label: 'Appointment-based service', help: 'Seen by appointment.' },
+      one_off:     { label: 'One-off event', help: 'A single event.' }
+    },
+    accessMethods: {
+      drop_in: 'Drop in', registration: 'Registration required', appointment: 'Appointment required', referral: 'Referral required'
+    },
+    entryRequirements: {
+      join_anytime: 'Join at any time', start_only: 'Must commence at the start', provider_approval: 'Late entry by provider approval'
+    },
+    enrolmentStatuses: {
+      open: 'Enrolments open', closed: 'Enrolments closed', full: 'Full', not_yet_open: 'Enrolments not yet open'
     },
 
     // Order matters: strongest assurance first.
@@ -109,7 +145,7 @@ window.ONNOW_SAMPLE_DATA = {
     { organisationId: 'ORG-011', organisationName: 'Saltbush Free Legal Help', organisationType: 'Community legal service', description: 'Volunteer lawyers offering free advice on tenancy, fines, debt and family matters.', areasServed: ['Parramatta', 'Blacktown', 'Mount Druitt'], phone: '02 5550 0111', email: 'advice@saltbushlegal.example', website: 'www.saltbushlegal.example', isFictional: true },
     { organisationId: 'ORG-012', organisationName: 'Second Stitch Clothing Exchange', organisationType: 'Volunteer group', description: 'Free clothing store and seasonal clothing and school uniform swaps.', areasServed: ['Doonside', 'Westmead'], phone: '02 5550 0112', email: 'swap@secondstitch.example', website: 'www.secondstitch.example', isFictional: true },
     { organisationId: 'ORG-013', organisationName: 'Paws Together Community Vet Van', organisationType: 'Veterinary charity', description: 'Mobile vet van offering free pet health checks for people on low incomes or experiencing homelessness.', areasServed: ['Bidwill', 'Rydalmere', 'Quakers Hill'], phone: '02 5550 0113', email: 'woof@pawstogether.example', website: 'www.pawstogether.example', isFictional: true },
-    { organisationId: 'ORG-014', organisationName: 'Common Ground English Circle', organisationType: 'Adult education provider', description: 'Free English conversation and beginner classes for adults, with childcare at some sessions.', areasServed: ['Harris Park', 'Blacktown', 'Seven Hills'], phone: '02 5550 0114', email: 'classes@commongroundenglish.example', website: 'www.commongroundenglish.example', isFictional: true },
+    { organisationId: 'ORG-014', organisationName: 'Common Ground English Circle', organisationType: 'Adult education provider', description: 'Free English conversation and beginner classes for adults, with childcare at some sessions.', areasServed: ['Harris Park', 'Blacktown', 'Seven Hills', 'Mount Druitt'], phone: '02 5550 0114', email: 'classes@commongroundenglish.example', website: 'www.commongroundenglish.example', isFictional: true },
     { organisationId: 'ORG-015', organisationName: 'Fresh Start Hygiene Bus', organisationType: 'Charity', description: 'Converted bus providing free hot showers, hygiene packs and a mobile laundry.', areasServed: ['Parramatta', 'Mount Druitt', 'Harris Park'], phone: '02 5550 0115', email: 'bus@freshstarthygiene.example', website: 'www.freshstarthygiene.example', isFictional: true },
 
     // ---- Added for recurring-schedule demonstration (fixed sites and mobile providers) ----
@@ -119,7 +155,16 @@ window.ONNOW_SAMPLE_DATA = {
     { organisationId: 'ORG-019', organisationName: 'Harvest Wheels Mobile Pantry', organisationType: 'Charity', description: 'Mobile food van distributing groceries at several stops each week.', areasServed: ['Blacktown', 'Mount Druitt', 'Rooty Hill'], phone: '02 5550 0119', email: 'van@harvestwheels.example', website: 'www.harvestwheels.example', isFictional: true },
     { organisationId: 'ORG-020', organisationName: 'Open Hands Food Truck', organisationType: 'Volunteer group', description: 'Food truck handing out free grocery packs and hot food at weekly stops.', areasServed: ['Blacktown', 'Mount Druitt', 'Rooty Hill'], phone: '02 5550 0120', email: 'truck@openhandsfood.example', website: 'www.openhandsfood.example', isFictional: true },
     { organisationId: 'ORG-021', organisationName: 'Spin Cycle Mobile Laundry', organisationType: 'Charity', description: 'Mobile laundry van with washers and dryers, visiting five locations each week.', areasServed: ['Blacktown', 'Doonside', 'Mount Druitt', 'Rooty Hill'], phone: '02 5550 0121', email: 'wash@spincyclelaundry.example', website: 'www.spincyclelaundry.example', isFictional: true },
-    { organisationId: 'ORG-022', organisationName: 'Threads on Wheels', organisationType: 'Volunteer group', description: 'Mobile clothing van offering free clothes and shoes at weekly stops.', areasServed: ['Blacktown', 'Plumpton', 'Mount Druitt'], phone: '02 5550 0122', email: 'racks@threadsonwheels.example', website: 'www.threadsonwheels.example', isFictional: true }
+    { organisationId: 'ORG-022', organisationName: 'Threads on Wheels', organisationType: 'Volunteer group', description: 'Mobile clothing van offering free clothes and shoes at weekly stops.', areasServed: ['Blacktown', 'Plumpton', 'Mount Druitt'], phone: '02 5550 0122', email: 'racks@threadsonwheels.example', website: 'www.threadsonwheels.example', isFictional: true },
+
+    // ---- Phase 4: a small number of organisations for the wider service categories ----
+    { organisationId: 'ORG-023', organisationName: 'Wattle Money Help', organisationType: 'Financial counselling service', description: 'Free, confidential financial counselling by appointment.', areasServed: ['Blacktown', 'Seven Hills', 'Doonside', 'Mount Druitt'], phone: '02 5550 0123', email: 'help@wattlemoney.example', website: 'www.wattlemoney.example', isFictional: true },
+    { organisationId: 'ORG-024', organisationName: 'Next Step Employment Connect', organisationType: 'Employment service', description: 'Job readiness workshops and a digital help desk.', areasServed: ['Mount Druitt', 'Rooty Hill', 'Whalan', 'Blacktown'], phone: '02 5550 0124', email: 'jobs@nextstepconnect.example', website: 'www.nextstepconnect.example', isFictional: true },
+    { organisationId: 'ORG-025', organisationName: 'Smile Bus Community Dental', organisationType: 'Health service', description: 'Mobile dental bus offering free check-ups by appointment.', areasServed: ['Plumpton', 'Rooty Hill', 'Mount Druitt', 'Blacktown'], phone: '02 5550 0125', email: 'smile@smilebusdental.example', website: 'www.smilebusdental.example', isFictional: true },
+    { organisationId: 'ORG-026', organisationName: 'Waratah First Nations Family Support', organisationType: 'Community-controlled organisation', description: 'Family yarning group and playgroup for Aboriginal and Torres Strait Islander families and community.', areasServed: ['Whalan', 'Mount Druitt', 'Bidwill'], phone: '02 5550 0126', email: 'yarn@waratahfamily.example', website: 'www.waratahfamily.example', isFictional: true },
+    { organisationId: 'ORG-027', organisationName: 'Safe Harbour Family Violence Support', organisationType: 'Specialist support service', description: 'Specialist domestic and family violence support by appointment or referral. Office location not published.', areasServed: ['Blacktown', 'Mount Druitt', 'Parramatta'], phone: '02 5550 0127', email: 'support@safeharbour.example', website: 'www.safeharbour.example', isFictional: true },
+    { organisationId: 'ORG-028', organisationName: 'Clean Cut Community Barbers', organisationType: 'Volunteer group', description: 'Volunteer barbers offering free haircuts at weekly mobile stops.', areasServed: ['Blacktown', 'Mount Druitt'], phone: '02 5550 0128', email: 'cuts@cleancutbarbers.example', website: 'www.cleancutbarbers.example', isFictional: true },
+    { organisationId: 'ORG-029', organisationName: 'Riverside Settlement Services', organisationType: 'Settlement service', description: 'Settlement support and a visa information clinic for people from migrant and refugee backgrounds.', areasServed: ['Harris Park', 'Parramatta', 'Westmead', 'Blacktown'], phone: '02 5550 0129', email: 'welcome@riversidesettlement.example', website: 'www.riversidesettlement.example', isFictional: true }
   ],
 
   // ===========================================================================
@@ -143,7 +188,11 @@ window.ONNOW_SAMPLE_DATA = {
     { siteId: 'SITE-009', siteName: 'Doonside library car park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Doonside', lga: 'Blacktown', location: { latitude: -33.7660, longitude: 150.8700, description: 'Mobile stop: library car park, Doonside (fictional)' }, isFictional: true },
     { siteId: 'SITE-010', siteName: 'Mount Druitt reserve car park stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7655, longitude: 150.8280, description: 'Mobile stop: reserve car park, Mount Druitt (fictional)' }, isFictional: true },
     { siteId: 'SITE-011', siteName: 'Blacktown reserve stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7755, longitude: 150.9030, description: 'Mobile stop: reserve car park, Blacktown (fictional)' }, isFictional: true },
-    { siteId: 'SITE-012', siteName: 'Plumpton shopping centre stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Plumpton', lga: 'Blacktown', location: { latitude: -33.7520, longitude: 150.8380, description: 'Mobile stop: shopping centre car park, Plumpton (fictional)' }, isFictional: true }
+    { siteId: 'SITE-012', siteName: 'Plumpton shopping centre stop', siteType: 'mobile_stop', hostOrganisationId: null, suburb: 'Plumpton', lga: 'Blacktown', location: { latitude: -33.7520, longitude: 150.8380, description: 'Mobile stop: shopping centre car park, Plumpton (fictional)' }, isFictional: true },
+    { siteId: 'SITE-013', siteName: 'Wattle Money Help office', siteType: 'fixed', hostOrganisationId: 'ORG-023', suburb: 'Blacktown', lga: 'Blacktown', location: { latitude: -33.7688, longitude: 150.9060, description: 'Wattle Money Help office (fictional venue)' }, isFictional: true },
+    { siteId: 'SITE-014', siteName: 'Next Step Mount Druitt office', siteType: 'fixed', hostOrganisationId: 'ORG-024', suburb: 'Mount Druitt', lga: 'Blacktown', location: { latitude: -33.7690, longitude: 150.8195, description: 'Next Step Mount Druitt office (fictional venue)' }, isFictional: true },
+    { siteId: 'SITE-015', siteName: 'Waratah Family Centre', siteType: 'fixed', hostOrganisationId: 'ORG-026', suburb: 'Whalan', lga: 'Blacktown', location: { latitude: -33.7570, longitude: 150.8090, description: 'Waratah Family Centre (fictional venue)' }, isFictional: true },
+    { siteId: 'SITE-016', siteName: 'Riverside Settlement Centre', siteType: 'fixed', hostOrganisationId: 'ORG-029', suburb: 'Harris Park', lga: 'Parramatta', location: { latitude: -33.8225, longitude: 151.0080, description: 'Riverside Settlement Centre (fictional venue)' }, isFictional: true }
   ],
 
   programs: [
@@ -161,7 +210,41 @@ window.ONNOW_SAMPLE_DATA = {
     { programId: 'PRG-009', organisationId: 'ORG-019', programName: 'Mobile Food Van', category: 'food_relief', deliveryMode: 'mobile', description: 'Free grocery packs and fresh produce from a mobile van.', isFictional: true },
     { programId: 'PRG-010', organisationId: 'ORG-020', programName: 'Food Truck Distribution', category: 'food_relief', deliveryMode: 'mobile', description: 'Free grocery packs and hot food from a food truck.', isFictional: true },
     { programId: 'PRG-011', organisationId: 'ORG-021', programName: 'Mobile Laundry', category: 'laundry', deliveryMode: 'mobile', description: 'Free washing and drying while you wait. Detergent supplied.', isFictional: true },
-    { programId: 'PRG-012', organisationId: 'ORG-022', programName: 'Mobile Clothing Van', category: 'clothing_assistance', deliveryMode: 'mobile', description: 'Free clothes and shoes from a mobile clothing van.', isFictional: true }
+    { programId: 'PRG-012', organisationId: 'ORG-022', programName: 'Mobile Clothing Van', category: 'clothing_assistance', deliveryMode: 'mobile', description: 'Free clothes and shoes from a mobile clothing van.', isFictional: true },
+
+    // ---- Phase 4 programs. Optional structure and participation fields are only
+    //      recorded where relevant; anything not recorded stays unknown. ----
+    { programId: 'PRG-013', organisationId: 'ORG-014', programName: 'English for Everyday Life (6-week course)', category: 'english_classes', deliveryMode: 'fixed', description: 'Six-week beginner English course covering shopping, appointments and transport. Childcare available.',
+      programType: 'fixed_term', accessMethod: 'registration', entryRequirement: 'start_only', durationWeeks: 6, sessionDurationMinutes: 120,
+      attendanceCommitment: 'Attend all six weekly sessions', eligibility: 'Adults learning English at beginner level', cost: 'Free', capacity: 16,
+      intakes: [
+        { intakeId: 'EEL-2026-1', commencementDate: '2026-11-26', completionDate: '2026-12-31', registrationDeadline: '2026-11-25', enrolmentStatus: 'open', capacity: 16 },
+        { intakeId: 'EEL-2027-1', commencementDate: '2027-02-04', completionDate: '2027-03-11', registrationDeadline: '2027-02-01', enrolmentStatus: 'not_yet_open', capacity: 16 }
+      ], isFictional: true },
+    { programId: 'PRG-014', organisationId: 'ORG-016', programName: 'Cooking on a Budget (4-week course)', category: 'life_skills', deliveryMode: 'fixed', description: 'Hands-on course on cooking healthy meals on a small budget.',
+      programType: 'fixed_term', accessMethod: 'registration', entryRequirement: 'provider_approval', durationWeeks: 4, sessionDurationMinutes: 120,
+      attendanceCommitment: 'Four weekly sessions', eligibility: 'Adults', cost: 'Free', capacity: 10,
+      intakes: [{ intakeId: 'COB-2026-4', commencementDate: '2026-11-26', completionDate: '2026-12-17', registrationDeadline: '2026-11-24', enrolmentStatus: 'open', capacity: 10 }], isFictional: true },
+    { programId: 'PRG-015', organisationId: 'ORG-023', programName: 'Financial Counselling', category: 'financial_counselling', deliveryMode: 'fixed', description: 'Free one-to-one financial counselling.',
+      programType: 'appointment', accessMethod: 'appointment', sessionDurationMinutes: 60, eligibility: 'People experiencing financial difficulty', cost: 'Free', isFictional: true },
+    { programId: 'PRG-016', organisationId: 'ORG-024', programName: 'Job Ready Workshops', category: 'employment', deliveryMode: 'fixed', description: 'Weekly workshops on resumes, interviews and job search.',
+      programType: 'rolling', accessMethod: 'registration', entryRequirement: 'join_anytime', sessionDurationMinutes: 120, eligibility: 'Job seekers aged 16 and over', cost: 'Free', capacity: 20, isFictional: true },
+    { programId: 'PRG-017', organisationId: 'ORG-024', programName: 'Digital Help Desk', category: 'digital_access', deliveryMode: 'fixed', description: 'Free computer access and help with phones, email and online forms.',
+      programType: 'drop_in', accessMethod: 'drop_in', cost: 'Free', isFictional: true },
+    { programId: 'PRG-018', organisationId: 'ORG-025', programName: 'Smile Bus Dental Checks', category: 'dental', deliveryMode: 'mobile', description: 'Free dental check-ups and cleaning on a mobile dental bus.',
+      programType: 'appointment', accessMethod: 'appointment', sessionDurationMinutes: 30, eligibility: 'Health care card holders', cost: 'Free', isFictional: true },
+    { programId: 'PRG-019', organisationId: 'ORG-026', programName: 'Family Yarning Group', category: 'first_nations', deliveryMode: 'fixed', description: 'Weekly yarning group for Aboriginal and Torres Strait Islander families and community.',
+      programType: 'drop_in', accessMethod: 'drop_in', cost: 'Free', isFictional: true },
+    { programId: 'PRG-020', organisationId: 'ORG-026', programName: 'Little Steps Playgroup', category: 'family_support', deliveryMode: 'fixed', description: 'Playgroup for families with children aged 0 to 5.',
+      programType: 'drop_in', accessMethod: 'drop_in', eligibility: 'Families with children aged 0 to 5', cost: 'Free', isFictional: true },
+    { programId: 'PRG-021', organisationId: 'ORG-027', programName: 'Family Violence Support', category: 'dfv_support', deliveryMode: 'fixed', description: 'Confidential specialist support by appointment or referral.',
+      programType: 'appointment', accessMethod: 'referral', cost: 'Free', publicSchedule: false, isFictional: true },
+    { programId: 'PRG-022', organisationId: 'ORG-028', programName: 'Community Haircuts', category: 'personal_care', deliveryMode: 'mobile', description: 'Free haircuts from volunteer barbers.',
+      programType: 'drop_in', accessMethod: 'drop_in', cost: 'Free', isFictional: true },
+    { programId: 'PRG-023', organisationId: 'ORG-029', programName: 'Settlement Support Drop-in', category: 'migrant_refugee', deliveryMode: 'fixed', description: 'Settlement information, referrals and community connection.',
+      programType: 'drop_in', accessMethod: 'drop_in', cost: 'Free', isFictional: true },
+    { programId: 'PRG-024', organisationId: 'ORG-029', programName: 'Visa Information Clinic', category: 'visa_immigration', deliveryMode: 'fixed', description: 'Fortnightly visa and immigration information sessions.',
+      programType: 'appointment', accessMethod: 'appointment', sessionDurationMinutes: 45, cost: 'Free', isFictional: true }
   ],
 
   // days: Mon, Tue, Wed, Thu, Fri, Sat, Sun. Each schedule runs for the 30-day demonstration period.
@@ -187,8 +270,77 @@ window.ONNOW_SAMPLE_DATA = {
     { scheduleId: 'SCH-019', programId: 'PRG-011', siteId: 'SITE-006', days: ['Fri'], startTime: '09:00', finishTime: '12:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
     { scheduleId: 'SCH-020', programId: 'PRG-012', siteId: 'SITE-011', days: ['Mon'], startTime: '12:00', finishTime: '14:00', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null },
     { scheduleId: 'SCH-021', programId: 'PRG-012', siteId: 'SITE-012', days: ['Wed'], startTime: '10:00', finishTime: '12:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
-    { scheduleId: 'SCH-022', programId: 'PRG-012', siteId: 'SITE-007', days: ['Sat'], startTime: '10:00', finishTime: '12:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null }
+    { scheduleId: 'SCH-022', programId: 'PRG-012', siteId: 'SITE-007', days: ['Sat'], startTime: '10:00', finishTime: '12:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
+    // Phase 4. A schedule with "dates" lists each session of one intake (one program, one intake, six sessions).
+    { scheduleId: 'SCH-023', programId: 'PRG-013', siteId: 'SITE-003', intakeId: 'EEL-2026-1', dates: ['2026-11-26', '2026-12-03', '2026-12-10', '2026-12-17', '2026-12-24', '2026-12-31'], startTime: '10:00', finishTime: '12:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-20' },
+    { scheduleId: 'SCH-024', programId: 'PRG-014', siteId: 'SITE-001', intakeId: 'COB-2026-4', dates: ['2026-11-26', '2026-12-03', '2026-12-10', '2026-12-17'], startTime: '14:00', finishTime: '16:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-025', programId: 'PRG-015', siteId: 'SITE-013', days: ['Tue', 'Thu'], startTime: '09:30', finishTime: '15:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-19' },
+    { scheduleId: 'SCH-026', programId: 'PRG-016', siteId: 'SITE-014', days: ['Wed'], startTime: '10:00', finishTime: '12:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-18' },
+    { scheduleId: 'SCH-027', programId: 'PRG-017', siteId: 'SITE-014', days: ['Fri'], startTime: '10:00', finishTime: '12:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-028', programId: 'PRG-018', siteId: 'SITE-012', days: ['Mon'], startTime: '09:00', finishTime: '13:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-17' },
+    { scheduleId: 'SCH-029', programId: 'PRG-018', siteId: 'SITE-006', days: ['Thu'], startTime: '13:00', finishTime: '16:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-17' },
+    { scheduleId: 'SCH-030', programId: 'PRG-019', siteId: 'SITE-015', days: ['Wed'], startTime: '10:00', finishTime: '12:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-16' },
+    { scheduleId: 'SCH-031', programId: 'PRG-020', siteId: 'SITE-015', days: ['Fri'], startTime: '09:30', finishTime: '11:30', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-032', programId: 'PRG-022', siteId: 'SITE-008', days: ['Sat'], startTime: '10:30', finishTime: '13:00', source: 'social_media', verificationStatus: 'published', lastConfirmedDate: null },
+    { scheduleId: 'SCH-033', programId: 'PRG-022', siteId: 'SITE-005', days: ['Wed'], startTime: '11:00', finishTime: '13:30', source: 'partner_referral', verificationStatus: 'unverified', lastConfirmedDate: null },
+    { scheduleId: 'SCH-034', programId: 'PRG-023', siteId: 'SITE-016', days: ['Tue'], startTime: '10:00', finishTime: '14:00', source: 'provider_submission', verificationStatus: 'provider_confirmed', lastConfirmedDate: '2026-11-20' },
+    { scheduleId: 'SCH-035', programId: 'PRG-024', siteId: 'SITE-016', dates: ['2026-11-26', '2026-12-10'], startTime: '13:00', finishTime: '16:00', source: 'organisation_website', verificationStatus: 'published', lastConfirmedDate: null }
   ],
+
+  // ===========================================================================
+  //  Agency collaboration profiles (fictional, for demonstration)
+  //  offers: true = yes, false = no, null = not specified (shown as "Not specified").
+  //  wants.interests: hosts (find a host for our services), visiting (welcome
+  //  visiting providers), mobile (shared mobile delivery), hub, referral, program.
+  //  Organisations without a profile are treated as "not specified".
+  // ===========================================================================
+  collaborationProfiles: {
+    'ORG-017': { offers: { indoorSpace: true, outdoorSpace: true, kitchen: true, mobileDelivery: false, visitingSpecialist: false, vehicleAccess: true, privateRoom: true,
+        attendance: 'About 80 people attend the daily community lunch (fictional estimate)', hostingTimes: 'Weekdays 10am to 3pm, around the 11:30am lunch',
+        amenities: ['Commercial kitchen', 'Dining hall for 60', 'Rear courtyard', 'Car park space for one van', 'Accessible toilets', 'Power and water connection (by arrangement)'] },
+      wants: { categories: ['laundry', 'clothing_assistance', 'legal_assistance', 'health_clinics'], interests: ['visiting', 'hub', 'referral'] } },
+    'ORG-016': { offers: { indoorSpace: true, outdoorSpace: null, kitchen: true, mobileDelivery: false, visitingSpecialist: false, vehicleAccess: true, privateRoom: true,
+        attendance: 'Regular weekday attendance across meals, showers and the clothing room', hostingTimes: 'Wednesday and Friday afternoons',
+        amenities: ['Showers', 'Interview room', 'Accessible toilets'] },
+      wants: { categories: ['legal_assistance', 'health_clinics', 'financial_counselling', 'dental'], interests: ['visiting', 'hub', 'referral', 'program'] } },
+    'ORG-018': { offers: { indoorSpace: true, outdoorSpace: true, kitchen: true, mobileDelivery: false, visitingSpecialist: false, vehicleAccess: true, privateRoom: true,
+        attendance: 'Weekday lunch attendance', hostingTimes: 'Tuesday and Thursday mornings; Wednesday afternoons',
+        amenities: ['Showers', 'Meeting room', 'Car park suitable for a van'] },
+      wants: { categories: ['laundry', 'clothing_assistance', 'dental', 'employment'], interests: ['visiting', 'hub', 'program'] } },
+    'ORG-026': { offers: { indoorSpace: true, outdoorSpace: true, kitchen: true, mobileDelivery: false, visitingSpecialist: false, vehicleAccess: null, privateRoom: true,
+        attendance: 'Weekly families group and playgroup', hostingTimes: 'Wednesdays and Fridays',
+        amenities: ['Family room', 'Outdoor play area', 'Kitchen'] },
+      wants: { categories: ['health_clinics', 'dental', 'legal_assistance'], interests: ['visiting', 'hub', 'referral'] } },
+    'ORG-024': { offers: { indoorSpace: true, outdoorSpace: false, kitchen: false, mobileDelivery: false, visitingSpecialist: true, vehicleAccess: null, privateRoom: true,
+        attendance: null, hostingTimes: 'Monday, Tuesday and Thursday', amenities: ['Computer room', 'Training room'] },
+      wants: { categories: ['english_classes', 'digital_access', 'life_skills'], interests: ['program', 'referral', 'hub'] } },
+    'ORG-023': { offers: { indoorSpace: true, outdoorSpace: false, kitchen: false, mobileDelivery: false, visitingSpecialist: true, vehicleAccess: null, privateRoom: true,
+        attendance: null, hostingTimes: null, amenities: ['Private interview rooms'] },
+      wants: { categories: ['english_classes', 'employment', 'community_meals'], interests: ['program', 'hub', 'referral'] } },
+    'ORG-021': { offers: { indoorSpace: false, outdoorSpace: null, kitchen: false, mobileDelivery: true, visitingSpecialist: false, vehicleAccess: null, privateRoom: false,
+        attendance: null, hostingTimes: null, amenities: ['Van with washers and dryers', 'Needs a water connection or uses its own tank'] },
+      wants: { categories: ['community_meals', 'showers_hygiene'], interests: ['hosts', 'mobile', 'hub'] } },
+    'ORG-022': { offers: { indoorSpace: false, outdoorSpace: null, kitchen: false, mobileDelivery: true, visitingSpecialist: false, vehicleAccess: null, privateRoom: false,
+        attendance: null, hostingTimes: null, amenities: ['Clothing van with fitting area'] },
+      wants: { categories: ['community_meals', 'food_relief'], interests: ['hosts', 'mobile', 'hub'] } },
+    'ORG-019': { offers: { mobileDelivery: true, visitingSpecialist: false, indoorSpace: false, kitchen: false },
+      wants: { categories: ['laundry', 'clothing_assistance'], interests: ['mobile', 'hosts'] } },
+    'ORG-004': { offers: { indoorSpace: false, outdoorSpace: null, kitchen: false, mobileDelivery: true, visitingSpecialist: true, vehicleAccess: null, privateRoom: true,
+        attendance: null, hostingTimes: null, amenities: ['Clinic van with private consulting room'] },
+      wants: { categories: ['community_meals', 'housing_homelessness'], interests: ['hosts', 'hub', 'referral'] } },
+    'ORG-011': { offers: { indoorSpace: null, outdoorSpace: null, kitchen: false, mobileDelivery: false, visitingSpecialist: true, vehicleAccess: null, privateRoom: null,
+        attendance: null, hostingTimes: null, amenities: ['Volunteer lawyers can attend partner sites by arrangement'] },
+      wants: { categories: ['social_support', 'housing_homelessness'], interests: ['hosts', 'hub', 'referral'] } },
+    'ORG-014': { offers: { indoorSpace: null, outdoorSpace: false, kitchen: false, mobileDelivery: false, visitingSpecialist: null, vehicleAccess: null, privateRoom: null,
+        attendance: 'Classes of up to 16 adult learners', hostingTimes: null, amenities: ['Childcare at some sessions'] },
+      wants: { categories: ['financial_counselling', 'employment', 'digital_access'], interests: ['program', 'referral', 'hosts'] } },
+    'ORG-025': { offers: { mobileDelivery: true, visitingSpecialist: false, vehicleAccess: null, privateRoom: true, amenities: ['Dental bus needs a level parking area'] },
+      wants: { categories: ['community_meals'], interests: ['hosts', 'hub'] } },
+    'ORG-027': { offers: { mobileDelivery: false, visitingSpecialist: true, privateRoom: null, amenities: ['Needs a private room at partner sites'] },
+      wants: { categories: ['housing_homelessness', 'legal_assistance'], interests: ['hosts', 'referral', 'hub'] } },
+    'ORG-028': { offers: { mobileDelivery: true, visitingSpecialist: false, amenities: ['Portable barber chairs; needs shade and power'] },
+      wants: { categories: ['showers_hygiene', 'community_meals'], interests: ['hosts', 'hub', 'mobile'] } }
+  },
   scheduleWindow: { from: '2026-11-24', to: '2026-12-23' }, // 30 consecutive days
 
   activities: [
@@ -332,6 +484,7 @@ window.ONNOW_SAMPLE_DATA = {
     const h12 = ((h + 11) % 12) + 1;
     return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${h >= 12 ? 'pm' : 'am'}`;
   };
+  const fmtD = (iso) => new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }).format(parse(iso));
   const daysText = (days) => {
     const sorted = DAY_ORDER.filter((d) => days.includes(d));
     if (sorted.length === 7) return 'Every day';
@@ -347,10 +500,16 @@ window.ONNOW_SAMPLE_DATA = {
   D.schedules.forEach((sc) => {
     const p = programById.get(sc.programId);
     const s = siteById.get(sc.siteId);
-    const wanted = sc.days.map((d) => DAY_INDEX[d]);
-    for (let d = parse(D.scheduleWindow.from); d <= parse(D.scheduleWindow.to); d.setDate(d.getDate() + 1)) {
-      if (!wanted.includes(d.getDay())) continue;
-      const date = toISO(d);
+    // Either listed session dates (one intake of a course) or weekly days within the window.
+    const dates = [];
+    if (sc.dates) dates.push(...sc.dates);
+    else {
+      const wanted = sc.days.map((d) => DAY_INDEX[d]);
+      for (let d = parse(D.scheduleWindow.from); d <= parse(D.scheduleWindow.to); d.setDate(d.getDate() + 1)) {
+        if (wanted.includes(d.getDay())) dates.push(toISO(d));
+      }
+    }
+    dates.forEach((date, i) => {
       D.activities.push({
         activityId: `OCC-${sc.scheduleId.slice(4)}-${date.replace(/-/g, '')}`,
         organisationId: p.organisationId,
@@ -370,9 +529,12 @@ window.ONNOW_SAMPLE_DATA = {
         source: sc.source,
         verificationStatus: sc.verificationStatus,
         lastConfirmedDate: sc.lastConfirmedDate,
+        intakeId: sc.intakeId || null,
+        sessionNumber: sc.dates ? i + 1 : null,
+        sessionsInIntake: sc.dates ? sc.dates.length : null,
         isFictional: true
       });
-    }
+    });
   });
 
   // 2. Link original one-off records to programs and sites.
@@ -406,7 +568,17 @@ window.ONNOW_SAMPLE_DATA = {
     p.siteIds = [...new Set(occ.map((a) => a.siteId))];
     p.sessionCount = occ.length;
     const sch = D.schedules.filter((sc) => sc.programId === p.programId);
-    if (!sch.length) {
+    const dated = sch.filter((sc) => sc.dates);
+    if (p.publicSchedule === false) {
+      p.scheduleText = 'By appointment or referral. Times and locations are not published.';
+    } else if (dated.length && dated.length === sch.length) {
+      const first = dated[0];
+      const wd = DAY_ORDER[(parse(first.dates[0]).getDay() + 6) % 7];
+      const intake = (p.intakes || []).find((x) => x.intakeId === first.intakeId);
+      p.scheduleText = intake && p.programType === 'fixed_term'
+        ? `${first.dates.length} weekly sessions, ${wd} ${fmtTime(first.startTime)} – ${fmtTime(first.finishTime)}, from ${fmtD(first.dates[0])} to ${fmtD(first.dates[first.dates.length - 1])} at ${siteById.get(first.siteId).siteName} (intake ${intake.intakeId})`
+        : `${first.dates.length} listed sessions, ${fmtTime(first.startTime)} – ${fmtTime(first.finishTime)} at ${siteById.get(first.siteId).siteName}`;
+    } else if (!sch.length) {
       p.scheduleText = `Recorded as ${occ.length} individual dated session${occ.length === 1 ? '' : 's'} (no weekly schedule recorded)`;
     } else if (sch.length === 1) {
       p.scheduleText = `${daysText(sch[0].days)}, ${fmtTime(sch[0].startTime)} – ${fmtTime(sch[0].finishTime)} at ${siteById.get(sch[0].siteId).siteName}`;

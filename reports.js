@@ -373,7 +373,7 @@
     blocks.push({ t: 'bullets', items: [
       'This report is based on recorded schedules in a fictional demonstration dataset.',
       'Potential opportunities are not confirmed arrangements. Existing shared delivery does not by itself establish a formal partnership.',
-      'Outreach capability, site facilities, availability, capacity, eligibility, demand and funding conditions are not recorded and need to be discussed directly.',
+      'Outreach capability and site facilities are only partly recorded, in fictional demonstration profiles. Availability, capacity, eligibility, demand and funding conditions are not recorded and need to be discussed directly.',
       `Distances are straight lines; "nearby" means within ${A.NEAR_M} m and referral pathways use ${(A.REFERRAL_M / 1000).toFixed(1)} km (illustrative assumptions).`,
       ...verif(mySegs).map(([k, v]) => `${k} (fictional): ${v} of your sessions in this period.`)
     ] });
@@ -391,8 +391,9 @@
     return esc(cell).replace(/\n/g, '<br>');
   };
   const runsHtml = (b) => (b.runs ? b.runs.map((r) => (r.b ? `<strong>${esc(r.text)}</strong>` : r.i ? `<em>${esc(r.text)}</em>` : esc(r.text))).join('') : esc(b.text));
-  function renderPreview(model) {
-    el.preview.innerHTML = model.blocks.map((b) => {
+  function renderPreview(model) { el.preview.innerHTML = previewHtml(model); }
+  function previewHtml(model) {
+    return model.blocks.map((b) => {
       switch (b.t) {
         case 'cover': return `<header class="rp-cover"><img src="Colour-Logo-TAG400px.png" alt="OnNow: Instantly connecting communities" width="400" height="235">
           <p class="rp-kicker">${esc(b.kicker)}</p><h1>${esc(b.title)}</h1><p class="rp-sub">${esc(b.subtitle)}</p>
@@ -459,7 +460,7 @@
     }
     for (const im of model.images) {
       try {
-        const svgText = G.hub(im.opp.graphic, { bg: true });
+        const svgText = im.svg || G.hub(im.opp.graphic, { bg: true });
         const m = /viewBox="0 0 (\d+) (\d+)"/.exec(svgText);
         images[im.key] = await svgToPng(svgText, Number(m[1]), Number(m[2]), 2);
       } catch (e) { /* diagram omitted */ }
@@ -469,11 +470,15 @@
   }
 
   async function download() {
-    if (!window.OnNowDocx) { setStatus('The Word generator could not load.', 'error'); return; }
     el.download.disabled = true;
-    setStatus('Preparing the Word document…');
+    await downloadModel(current || build(), setStatus);
+    el.download.disabled = false;
+  }
+  // Shared by the Reports page and the Community Hub Builder.
+  async function downloadModel(model, status) {
+    if (!window.OnNowDocx) { status('The Word generator could not load.', 'error'); return null; }
+    status('Preparing the Word document…');
     try {
-      const model = current || build();
       const blob = await buildDocx(model);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -483,12 +488,141 @@
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
-      setStatus(`Downloaded ${model.filename} (${Math.round(blob.size / 1024)} KB).`, 'ok');
+      status(`Downloaded ${model.filename} (${Math.round(blob.size / 1024)} KB).`, 'ok');
+      return blob;
     } catch (e) {
-      setStatus(`The Word document could not be created: ${e.message}`, 'error');
-    } finally {
-      el.download.disabled = false;
+      status(`The Word document could not be created: ${e.message}`, 'error');
+      return null;
     }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Community Hub Collaboration Proposal (from the Hub Builder)          */
+  /* ------------------------------------------------------------------ */
+
+  const FREQ = { one_off: 'One-off', weekly: 'Weekly', fortnightly: 'Fortnightly', monthly: 'Monthly', quarterly: 'Quarterly' };
+  // plan: built by the Community Hub Builder (collaborate.js) from the fictional records.
+  function hubProposal(plan) {
+    const blocks = [];
+    const images = [];
+    const host = plan.host;
+    const hostOrg = host.org ? orgById.get(host.org) : null;
+    const hp = host.org ? O.profileOf(host.org) : null;
+    const place = host.kind === 'site' ? `${host.name}, ${host.suburb}` : `${host.name}, ${host.suburb} (proposed location, requires investigation)`;
+    const when = plan.frequency === 'one_off'
+      ? `One-off, on a ${O.WEEKDAY_PLURAL[plan.day].replace(/s$/, '')}, ${fmtRange(plan.start, plan.end)}`
+      : `${FREQ[plan.frequency]}, ${O.WEEKDAY_PLURAL[plan.day]}, ${fmtRange(plan.start, plan.end)}`;
+    const partners = plan.partners.filter((p) => plan.participating.has(p.org));
+    const orgsAll = [...new Set([host.org, ...partners.map((p) => p.org)].filter(Boolean))];
+    const by = plan.initiator.perspective === 'council'
+      ? `${COUNCILS[host.council].name} (council facilitated)`
+      : orgName(plan.initiator.orgId);
+    const svcNames = (cats) => listText(cats.map((c) => category(c).label.toLowerCase()));
+    const newCats = plan.services.filter((c) => plan.proposedServices.has(c));
+    const existingCats = [...new Set(plan.existing.map((e) => e.cat))];
+
+    blocks.push({
+      t: 'cover', logo: 'logo', kicker: 'Proposed collaboration · fictional demonstration',
+      title: 'Community Hub Collaboration Proposal', subtitle: place,
+      rows: [
+        ['Proposed host or location', place],
+        ['Prepared by', by],
+        ['Proposed frequency, day and hours', when],
+        ['Participating organisations', `${orgsAll.length} (${listText(orgsAll.map(orgName))})`],
+        ['Status', 'Proposed for discussion. Not a confirmed arrangement, booking or schedule.'],
+        ['Prepared', `${today()} (demonstration reference date ${fmtDate(DEMO_DATE)})`]
+      ],
+      note: 'Fictional demonstration. Every organisation, service, place, facility, contact detail and schedule in this proposal is made up. It is a starting point for interagency discussion. It does not confirm any provider\'s availability, capacity, funding, willingness to participate or the suitability of any site.'
+    });
+
+    blocks.push({ t: 'h1', text: '1. Purpose and potential community benefit' });
+    blocks.push({ t: 'p', text: `This proposal explores bringing ${svcNames(plan.services)} together ${host.kind === 'site' ? `at ${host.name}` : `in ${host.suburb}`} on a regular basis, so that people can access several services in one familiar place rather than only at occasional large events.` });
+    blocks.push({ t: 'bullets', items: [
+      existingCats.length ? `People already attending ${svcNames(existingCats)} could access ${newCats.length ? svcNames(newCats) : 'additional services'} in the same visit.` : 'People could access several services in one visit.',
+      'Organisations could get to know each other\'s services and make warm referrals on the day.',
+      'A regular schedule gives the community a predictable time and place to seek help.',
+      'These are potential benefits only. Community demand and service use are not recorded in OnNow.'
+    ] });
+
+    blocks.push({ t: 'h1', text: '2. Proposed host and location' });
+    if (host.kind === 'site') {
+      blocks.push({ t: 'kv', rows: [
+        ['Host organisation', hostOrg ? hostOrg.organisationName : 'Not recorded'],
+        ['Site', `${host.name}, ${host.suburb} (${COUNCILS[host.council].name})`],
+        ['Established attendance', (hp && hp.offers.attendance) || 'Not specified'],
+        ['Available hosting days and times', (hp && hp.offers.hostingTimes) || 'Not specified'],
+        ['Amenities', hp && hp.offers.amenities.length ? hp.offers.amenities.join('; ') : 'Not specified']
+      ] });
+      blocks.push({ t: 'h2', text: 'Known facilities and hosting capability (declared)' });
+      blocks.push({ t: 'table', head: ['Facility or capability', 'Declared'], widths: [0.62, 0.38],
+        rows: O.OFFER_FIELDS.map((f) => [f.label, O.yesNo(hp ? hp.offers[f.k] : null)]) });
+      blocks.push({ t: 'note', text: 'Facilities come from a fictional demonstration profile. "Not specified" items, and the suitability of any space, need to be confirmed with the host.' });
+    } else {
+      blocks.push({ t: 'kv', rows: [
+        ['Proposed location', `${host.name}, ${host.suburb} (${COUNCILS[host.council].name})`],
+        ['Host organisation', 'None identified'],
+        ['Site suitability', 'Unknown. A suitable community location needs to be identified and confirmed.']
+      ] });
+    }
+
+    blocks.push({ t: 'h1', text: '3. Proposed frequency, day and operating hours' });
+    blocks.push({ t: 'kv', rows: [['Frequency', FREQ[plan.frequency]], ['Day', O.WEEKDAY_PLURAL[plan.day].replace(/s$/, '')], ['Proposed hours', fmtRange(plan.start, plan.end)]] });
+    blocks.push({ t: 'note', text: 'Proposed days and hours are hypothetical. They are not existing operating hours and have not been agreed by any organisation.' });
+
+    blocks.push({ t: 'h1', text: '4. Services' });
+    const svcRows = [];
+    plan.existing.forEach((e) => svcRows.push([catCell(e.cat), 'Already delivered at this site', `${e.name}, ${orgName(e.org)}\n${e.pattern}`]));
+    plan.services.filter((c) => plan.proposedServices.has(c)).forEach((c) => {
+      const ps = partners.filter((p) => p.cat === c);
+      svcRows.push([catCell(c), 'Proposed additional service', ps.length ? ps.map((p) => `${p.name}, ${orgName(p.org)}`).join('\n') : 'No participating provider selected yet']);
+    });
+    blocks.push({ t: 'table', head: ['Service', 'Status', 'Program and organisation'], widths: [0.3, 0.24, 0.46], rows: svcRows.length ? svcRows : [['None selected', '', '']] });
+
+    blocks.push({ t: 'h1', text: '5. Participating organisations and why they were identified' });
+    if (partners.length) {
+      blocks.push({ t: 'table', head: ['Organisation', 'Program and service', 'Delivery', 'Current locations and schedules', 'Why identified'], widths: [0.18, 0.2, 0.1, 0.26, 0.26],
+        rows: partners.map((p) => [orgName(p.org), catCell(p.cat, `\n${p.name}`), p.mode === 'mobile' ? 'Mobile' : 'Fixed site', `${p.locations.join('\n') || 'No public locations recorded'}\n${p.pattern}`, p.reasons.join('; ')]) });
+    } else blocks.push({ t: 'p', text: 'No partner organisations have been selected yet.' });
+
+    if (plan.svg) {
+      blocks.push({ t: 'h2', text: 'Hub diagram' });
+      blocks.push({ t: 'image', key: 'hub_plan', svg: plan.svg, width: 520, height: Math.round(520 * plan.svgH / plan.svgW), alt: `Proposed hub at ${place}`, caption: 'Proposed host at the centre. A solid turquoise ring marks services already delivered at the site; a dashed ring marks potential additional partners.' });
+      images.push({ key: 'hub_plan', svg: plan.svg });
+    }
+
+    blocks.push({ t: 'h1', text: '6. Contact details (fictional)' });
+    blocks.push({ t: 'note', text: 'Contact details are fictional and made up for this demonstration. Do not call, email or visit.' });
+    blocks.push({ t: 'table', head: ['Organisation', 'Phone', 'Email', 'Website'], widths: [0.3, 0.18, 0.3, 0.22],
+      rows: orgsAll.map((id) => { const o = orgById.get(id) || {}; return [o.organisationName, o.phone, o.email, o.website]; }) });
+
+    blocks.push({ t: 'h1', text: '7. Practical matters requiring discussion' });
+    blocks.push({ t: 'bullets', items: plan.matters });
+
+    blocks.push({ t: 'h1', text: '8. Suggested next actions' });
+    blocks.push({ t: 'bullets', items: [
+      `Share this proposal with ${listText(orgsAll.map(orgName))} and ask whether each is interested in exploring it.`,
+      host.kind === 'site' ? `Confirm with ${orgName(host.org)} which spaces, facilities and times could realistically be offered.` : `Identify a suitable community location in ${host.suburb} and confirm its availability and facilities.`,
+      'Hold an introductory interagency conversation to agree purpose, roles and a possible first date.',
+      'Confirm each organisation\'s staffing, insurance, eligibility rules and any funding conditions.',
+      'Agree how the hub would be promoted to the community, and how feedback would be gathered.'
+    ] });
+
+    blocks.push({ t: 'h1', text: '9. Meeting notes, responsibilities and agreed actions' });
+    blocks.push({ t: 'table', head: ['Meeting notes'], widths: [1], rows: [['']], minHeight: 2600 });
+    const rows = orgsAll.map((id) => [orgName(id), '', '', '', '']);
+    for (let i = 0; i < 3; i++) rows.push(['', '', '', '', '']);
+    blocks.push({ t: 'table', head: ['Organisation', 'Agreed contribution', 'Person responsible', 'Next action', 'Target date'], widths: [0.22, 0.26, 0.18, 0.2, 0.14], rows, minHeight: 560 });
+
+    blocks.push({ t: 'h1', text: '10. Data limitations' });
+    blocks.push({ t: 'bullets', items: [
+      'All records are fictional and for demonstration only.',
+      'Partners were identified from recorded programs, service areas, distances and declared (fictional) profiles. Geographic proximity alone was not treated as suitability.',
+      'Recorded schedules show existing operating hours. They do not show spare capacity or availability for a hub.',
+      'Missing records do not prove that a service does not exist, and do not measure community need.'
+    ] });
+
+    const filename = `OnNow-Hub-Proposal_${slug(host.name)}_${plan.frequency}-${plan.day}.docx`;
+    return { title: 'Community Hub Collaboration Proposal', subject: place, filename, blocks, images, headerText: `Community Hub Collaboration Proposal · Fictional demonstration` };
   }
   function setStatus(text, kind) {
     el.status.textContent = text;
@@ -573,5 +707,5 @@
   });
 
   wire();
-  window.OnNowReports = { councilReport, agencyReport, buildDocx, build: () => build() };
+  window.OnNowReports = { councilReport, agencyReport, hubProposal, buildDocx, previewHtml, downloadModel, build: () => build() };
 })();

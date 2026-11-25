@@ -133,11 +133,63 @@
       });
       const centre = g.centerCat
         ? `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${category(g.centerCat).color}"/>${iconG(category(g.centerCat).icon, cx, cy, 40)}`
-        : `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${NAVY}"/>${iconG('fixedSite', cx, cy, 42)}`;
+        : g.proposed
+          ? `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fff" stroke="${NAVY}" stroke-width="3" stroke-dasharray="6 5"/>${iconG('pin', cx, cy, 40, NAVY)}`
+          : `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${NAVY}"/>${iconG('fixedSite', cx, cy, 42)}`;
       return `${svgOpen(W, H, `${g.center} with ${g.nodes.length} organisations`)}${opts && opts.bg ? `<rect width="${W}" height="${H}" fill="#fff"/>` : ''}
         ${text(wrap(g.center, 44, 1), cx, 22, 'middle', 15, 700, NAVY, 18)}
         ${lines}${centre}${circles}${labels}
         ${g.nodes.length > 6 ? text([`+${g.nodes.length - 6} more (see list)`], W - 8, H - 8, 'end', 12, 600, MUTED, 15) : ''}</svg>`;
+    }
+
+    // Community Hub Builder: host at the centre, any number of partners around it.
+    // Sizes grow with the group so labels never overlap; existing services have a turquoise ring.
+    function hubPlan(g, opts) {
+      const all = g.nodes;
+      const MAX = 10;
+      const nodes = all.slice(0, MAX);
+      const n = Math.max(nodes.length, 1);
+      const r = n <= 6 ? 32 : n <= 9 ? 28 : 24;
+      const R = 48;
+      const ring = n <= 2 ? 150 : n <= 4 ? 136 : n <= 6 ? 146 : n <= 9 ? 168 : 188;
+      const side = n > 6 ? 0.2 : 0.45;
+      const W = Math.round(2 * (ring + r + 150));
+      const top = 34;
+      const H = Math.round(top + 2 * (ring + r + 58) + (n % 2 ? 34 : 0) + (all.length > MAX ? 22 : 0));
+      const cx = W / 2, cy = top + ring + r + 58;
+      const start = n === 1 ? 0 : -90 + 180 / n;
+      let lines = '', circles = '', labels = '';
+      nodes.forEach((node, i) => {
+        const ang = ((start + (360 / n) * i) * Math.PI) / 180;
+        const ux = Math.cos(ang), uy = Math.sin(ang);
+        const nx = cx + ux * ring, ny = cy + uy * ring;
+        lines += connector(cx, cy, R, nx, ny, r + 6, node.existing ? MINT : '#8A93AD');
+        circles += serviceNode(nx, ny, r, node.cat, node.mode, node.existing, [ux, uy]);
+        if (!node.existing) circles += `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r + 6}" fill="none" stroke="${NAVY}" stroke-width="2" stroke-dasharray="4 5"/>`;
+        const name = wrap(orgName(node.org), 17, 2);
+        const sub = wrap(category(node.cat).label, 22, 1);
+        const blockH = name.length * 16 + 15;
+        if (Math.abs(ux) >= side) {
+          const x = nx + Math.sign(ux) * (r + 22);
+          const y0 = ny - blockH / 2 + 12;
+          const anchor = ux > 0 ? 'start' : 'end';
+          labels += text(name, x, y0, anchor, 13.5, 700, INK, 16) + text(sub, x, y0 + name.length * 16, anchor, 12, 400, MUTED, 15);
+        } else if (uy > 0) {
+          const y0 = ny + r + 36;
+          labels += text(name, nx, y0, 'middle', 13.5, 700, INK, 16) + text(sub, nx, y0 + name.length * 16, 'middle', 12, 400, MUTED, 15);
+        } else {
+          const y0 = ny - r - 30 - blockH + 12;
+          labels += text(name, nx, y0, 'middle', 13.5, 700, INK, 16) + text(sub, nx, y0 + name.length * 16, 'middle', 12, 400, MUTED, 15);
+        }
+      });
+      const centre = g.proposed
+        ? `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fff" stroke="${NAVY}" stroke-width="3" stroke-dasharray="6 5"/>${iconG('pin', cx, cy, 42, NAVY)}`
+        : `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${NAVY}"/>${iconG(g.centerIcon || 'fixedSite', cx, cy, 44)}`;
+      return `${svgOpen(W, H, `${g.center} with ${all.length} participating organisations`)}${opts && opts.bg ? `<rect width="${W}" height="${H}" fill="#fff"/>` : ''}
+        ${text(wrap(g.center, 60, 1), cx, 24, 'middle', 16, 700, NAVY, 18)}
+        ${lines}${centre}${circles}${labels}
+        ${!nodes.length ? text(['Choose partners to see them here'], cx, cy + R + 34, 'middle', 13, 600, MUTED, 15) : ''}
+        ${all.length > MAX ? text([`+${all.length - MAX} more (see list)`], W - 10, H - 10, 'end', 12, 600, MUTED, 15) : ''}</svg>`;
     }
 
     // Concentrated mobile stops and suburbs with no recorded service.
@@ -192,9 +244,10 @@
       if (g.kind === 'schedule') return opts && opts.svgOnly ? '' : scheduleHtml(g);
       return '';
     }
-    return { pair, mobile, hub, geo, scheduleHtml, forOpp, wrap };
+    return { pair, mobile, hub, hubPlan, geo, scheduleHtml, forOpp, wrap };
   })();
   window.OnNowGraphics = G;
+  window.OnNowInsights = { detailHtml: (o) => detailHtml(o), rulesHtml: () => rulesHtml() };
 
   /* ================================================================== */
   /* Page state                                                          */
@@ -342,8 +395,10 @@
   }
 
   function onAction(e) {
-    const t = e.target.closest('[data-sa-action], [data-goto], [data-opp], [data-ctype], [data-collab-more], [data-recurring-all], [data-prog-all]');
+    const t = e.target.closest('[data-sa-action], [data-goto], [data-opp], [data-ctype], [data-collab-more], [data-recurring-all], [data-prog-all], [data-cb-open], [data-cb-go]');
     if (!t) return;
+    if (t.dataset.cbOpen) { O.showPage('collaborate', { oppId: t.dataset.cbOpen }); return; }
+    if ('cbGo' in t.dataset) { O.showPage('collaborate', {}); return; }
     if (t.dataset.goto) { setView(t.dataset.goto, t.dataset.ctype); return; }
     if (t.dataset.opp) {
       local.openOpp = local.openOpp === t.dataset.opp ? null : t.dataset.opp;
@@ -505,7 +560,8 @@
         <div class="ins-types">${typeCounts.map((t) => `<button type="button" class="ins-type" data-goto="collab" data-ctype="${t.k}" ${t.n ? '' : 'disabled'} title="${esc(A.TYPES[t.k].label)}">${badge(A.TYPES[t.k].icon, { size: 30, color: t.n ? O.BRAND.navy : '#AAB1C4' })}<span>${t.n}</span><span class="visually-hidden">${esc(A.TYPES[t.k].label)}</span></button>`).join('')}</div>
         ${highlight ? `<p class="ins-text"><strong>${esc(highlight.title)}.</strong> ${esc(highlight.summary)}</p>` : '<p class="ins-text">No opportunities identified for this selection.</p>'}
         ${S.categories.size ? `<p class="ins-note">${S.includeComplementary ? 'Complementary service types are included: opportunities start from your selected services and can involve other service types.' : 'Only opportunities where every service is one of your selected service types.'}</p>` : ''}
-        <button type="button" class="btn btn-mint" data-goto="collab">Explore collaboration${svg('arrowRight', { size: 18 })}</button>
+        <div class="ins-btns"><button type="button" class="btn btn-mint" data-cb-go>${svg('collaborate', { size: 18 })}Plan together in Collaborate</button>
+        <button type="button" class="btn-outline" data-goto="collab">See the analysis${svg('arrowRight', { size: 18 })}</button></div>
       </article>
       <article class="ins-card ins-card--gaps">
         <div class="ins-head">${badge('gap', { size: 56, color: '#475D75' })}<h2>Recorded service gaps</h2></div>
@@ -697,7 +753,6 @@
     const open = local.openOpp === o.id;
     const graphic = G.forOpp(o);
     const statusIcon = o.status === 'existing' ? svg('check', { size: 14, stroke: 3.2 }) : o.status === 'investigate' ? svg('search', { size: 14, stroke: 3 }) : svg('handshake', { size: 14, stroke: 2.6 });
-    const contacts = [...new Set(o.parties.map((p) => p.org))].map((id) => orgById.get(id)).filter(Boolean);
     return `<li class="opp opp--${o.status}${open ? ' is-open' : ''}${o.graphic && o.graphic.kind === 'schedule' ? ' opp--wide' : ''}">
       <div class="opp-top">${badge(o.typeInfo.icon, { size: 36 })}<span class="opp-type">${o.typeInfo.n}. ${esc(o.typeInfo.label)}</span>
         <span class="opp-status opp-status--${o.status}">${statusIcon}${esc(o.statusInfo.label)}</span></div>
@@ -710,14 +765,26 @@
         <li>${svg('heartHands', { size: 18 })}<span><strong>Potential benefit:</strong> ${esc(o.benefit)}</span></li>
       </ul>
       <div class="opp-orgs">${o.parties.slice(0, 5).map((p) => `<span class="opp-org">${svg(p.mode === 'mobile' ? 'van' : 'fixedSite', { size: 15 })}${esc(orgName(p.org))}</span>`).join('')}${o.parties.length > 5 ? `<span class="opp-org">+${o.parties.length - 5} more</span>` : ''}</div>
-      <button type="button" class="btn-outline opp-toggle" data-opp="${esc(o.id)}" aria-expanded="${open}">${open ? 'Hide details' : 'View details'}${svg('chevronDown', { size: 18 })}</button>
-      ${open ? `<div class="opp-details">
+      <div class="opp-actions">
+        <button type="button" class="btn-outline opp-toggle" data-opp="${esc(o.id)}" aria-expanded="${open}">${open ? 'Hide details' : 'View details'}${svg('chevronDown', { size: 18 })}</button>
+        <button type="button" class="btn-ghost" data-cb-open="${esc(o.id)}">${svg('collaborate', { size: 18 })}Open in Collaborate</button>
+      </div>
+      ${open ? detailHtml(o) : ''}
+    </li>`;
+  }
+
+  // Supporting evidence for one opportunity. Shared with the Collaborate page.
+  function detailHtml(o) {
+    const contacts = [...new Set(o.parties.map((p) => p.org))].map((id) => orgById.get(id)).filter(Boolean);
+    return `<div class="opp-details">
         <p class="opp-status-help"><strong>${esc(o.statusInfo.label)}:</strong> ${esc(o.statusInfo.help)}</p>
         <dl class="facts">${o.facts.filter((f) => f[1]).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
         <h4>Why this was identified</h4><p>${esc(o.why)}</p>
+        ${o.declared && o.declared.length ? `<h4>Declared interests (fictional profiles)</h4><ul class="opp-consider">${o.declared.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>` : ''}
         <h4>Organisations involved</h4>
         <ul class="opp-parties">${o.parties.map((p) => `<li><strong>${esc(orgName(p.org))}</strong> ${modeTag(p.mode)}<span class="hint-inline"> · ${esc(p.role)}</span>
           <ul>${p.programs.map((pr) => `<li>${catChip(pr.cat)} ${esc(pr.name)}: ${esc(pr.pattern)}</li>`).join('')}</ul></li>`).join('')}</ul>
+        <h4>Recorded schedules and timing</h4><p>${esc(o.window)}</p>
         <h4>Matters to discuss</h4><ul class="opp-consider">${o.considerations.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
         <h4>Suggested next action</h4><p>${esc(o.nextAction)}</p>
         ${o.caution ? `<p class="callout callout--warn">${esc(o.caution)}</p>` : ''}
@@ -725,8 +792,7 @@
         <h4>Fictional contact details</h4>
         <ul class="opp-contacts">${contacts.map((c) => `<li><strong>${esc(c.organisationName)}</strong><span>${esc(c.phone)} · ${esc(c.email)}</span></li>`).join('')}</ul>
         <p class="hint">A potential opportunity is not a recommendation or a confirmed arrangement. Contact details are fictional.</p>
-      </div>` : ''}
-    </li>`;
+      </div>`;
   }
 
   let geoMaps = [];
@@ -796,14 +862,17 @@
       <li><strong>Times</strong> overlap only if they intersect for a positive duration. A session ending when another starts does not overlap.</li>
       <li><strong>Similar services:</strong> the same category; food relief and community meals count as similar. Any other pair of categories is complementary.</li>
       <li><strong>Distances</strong> are straight lines between fictional map points. "Nearby" means within ${A.NEAR_M} m; referral pathways use ${(A.REFERRAL_M / 1000).toFixed(1)} km. Both are illustrative demonstration assumptions. Council membership alone is never treated as proximity.</li>
-      <li><strong>1. Host a mobile service:</strong> a mobile service stops within ${A.NEAR_M} m of a community site run by another organisation that does not record that service. If the mobile service is already recorded at the site at overlapping times, it is existing complementary delivery.</li>
+      <li><strong>Community sites:</strong> a fixed site counts as an established community site when its host runs a drop-in essentials service there (food, meals, showers, laundry, clothing or personal care) or declares regular community attendance. Offices and appointment-only premises, mobile stops, car parks and clinic vans are never treated as confirmed hub hosts.</li>
+      <li><strong>Declared profiles:</strong> fictional agency profiles record what each organisation can offer and who it wants to connect with. A declared interest strengthens a match, but proximity alone never establishes a suitable collaboration. Anything not declared is shown as not specified.</li>
+      <li><strong>1. Host a mobile service:</strong> a mobile service stops within ${A.NEAR_M} m of a community site that does not record that service, or the site has declared it wants that service and the provider lists the site's suburb in its service area. If the mobile service is already recorded at the site at overlapping times, it is existing complementary delivery. Sites that declare no van access or outdoor space require investigation.</li>
       <li><strong>2. Mobile services together:</strong> mobile providers of complementary services stop at the same recorded stop, or within ${A.NEAR_M} m. Existing if they are recorded at the same stop at overlapping times. One suggestion per area (stops within 1 km are grouped).</li>
-      <li><strong>3. Multi-agency hub:</strong> three or more organisations offering three or more kinds of service deliver at or within ${A.NEAR_M} m of one location. Community sites are considered first; one suggestion per 1 km area.</li>
+      <li><strong>3. Community hub:</strong> three or more organisations offering three or more kinds of service deliver at or within ${A.NEAR_M} m of one location. Established community sites come first; elsewhere the location itself requires investigation. Similar providers in one hub are flagged, because each would need a distinct contribution. One suggestion per 1 km area.</li>
       <li><strong>4. Coordinate hours:</strong> similar services by different organisations overlap in the same suburb on two or more dates.</li>
       <li><strong>5. Coordinate coverage:</strong> two or more mobile providers of similar services stop in the same suburb, while other suburbs of the council record none of that service.</li>
-      <li><strong>6. Visiting provider:</strong> a fixed provider of a support service (housing, legal, health, mental health, social support or English classes) lists the host site's suburb in its service area, and the host site does not record that service. Outreach capability is not recorded, so these always require investigation.</li>
-      <li><strong>7. Referral pathways:</strong> an organisation delivering basic support (food, meals, showers, laundry or clothing) has at least two different support services operating within ${(A.REFERRAL_M / 1000).toFixed(1)} km in the period. No referral relationship is implied.</li>
-      <li>No numerical scores are used. Each combination of organisations, programs and sites appears once, and weekly sessions are grouped into one opportunity.</li>
+      <li><strong>6. Visiting provider:</strong> a fixed provider of a support service lists the host site's suburb in its service area, and the host site does not record that service. Requested services and providers that declare visiting capability come first, with at most three per site. Potential only when the provider declares visiting capability and the host has declared an interest; otherwise further investigation is required.</li>
+      <li><strong>7. Referral pathways:</strong> an organisation delivering basic support (food, meals, showers, laundry, clothing or personal care) has at least two different support services operating within ${(A.REFERRAL_M / 1000).toFixed(1)} km in the period. No referral relationship is implied.</li>
+      <li><strong>8. Program collaboration:</strong> a fixed-term course (one program and one intake, however many sessions) could host guest specialist sessions from providers that serve its suburb and declare visiting or program capability, refer participants on to programs they can join at any time, or coordinate start dates with another course in the same suburb.</li>
+      <li>No numerical scores are shown. Each combination of organisations, programs and sites appears once, and weekly sessions are grouped into one opportunity.</li>
     </ul>`;
   }
 
